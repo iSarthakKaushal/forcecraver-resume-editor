@@ -1043,6 +1043,8 @@ html, body {
     border-bottom: 1.5px solid var(--paper-border);
     padding-bottom: 3px;
     margin-bottom: 8px;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
 }
 
 /* Summary Text */
@@ -1115,12 +1117,16 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    page-break-inside: auto;
+    break-inside: auto;
 }
 
 .res-exp-header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    page-break-after: avoid;
+    break-after: avoid;
 }
 
 .res-exp-company {
@@ -1158,15 +1164,17 @@ html, body {
 .res-projects-list {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
 .res-proj-card {
     border: 1px solid #cbd5e1;
     border-radius: 4px;
-    padding: 10px 12px;
+    padding: 9px 12px;
     background: rgba(248, 250, 252, 0.75);
-    page-break-inside: avoid;
+    page-break-inside: auto;
+    break-inside: auto;
+    margin-bottom: 8px;
 }
 
 .res-proj-top {
@@ -1176,6 +1184,8 @@ html, body {
     border-bottom: 1px solid #e2e8f0;
     padding-bottom: 4px;
     margin-bottom: 6px;
+    page-break-after: avoid;
+    break-after: avoid;
 }
 
 .res-proj-name {

@@ -983,10 +983,42 @@ function sanitizeAndEnrichStructuredData(data) {
                 pName = `Enterprise Software Project ${idx + 1}`;
             }
 
-            const pRole = p.role || data.title || "Developer";
-            const pEnv = p.environment || `${data.skills.languages || 'Java, Spring Boot'}, ${data.skills.frontend || 'React, Liferay DXP'}, ${data.skills.databases || 'PostgreSQL'}`;
-            const pClient = p.client || 'Confidential';
-            const pDesc = p.description || `Enterprise digital portal solution engineered to automate workflows and optimize high-throughput data processing.`;
+function cleanProjectDescription(rawDesc, projectName, role, env) {
+    if (!rawDesc || typeof rawDesc !== 'string') {
+        return `Engineered a scalable enterprise solution delivering automated processing, high availability, and robust API workflows.`;
+    }
+
+    let s = rawDesc.trim();
+
+    // 1. Cut off at "Key Contributions", "Responsibilities", "Highlights", "Achievements", "Tools", "Client", or next Company
+    s = s.replace(/(?:Key\s*Contributions?|Responsibilities|Highlights|Achievements|Key\s*Deliverables|Core\s*Responsibilities|Tech\s*Stack|Tools|Environment|Client\s*:|Duration\s*:|Alliance\s*technologies|JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[\s\S]*/i, '');
+
+    // 2. Remove leading bullet symbols, broken words, or orphan punctuation
+    s = s.replace(/^[•\-\*\d\.\(\)\s,;:|]+/, '');
+    s = s.replace(/^[a-z0-9]{1,2}\s+(?:to|for|and|in)\s+/i, 'Designed system to ');
+
+    // 3. Remove email, phone, addresses
+    s = s.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '');
+    s = s.replace(/\s+/g, ' ').trim();
+
+    // 4. Limit to max 2 crisp sentences / ~200 characters
+    const sentences = s.split(/(?<=[.!?])\s+/).filter(Boolean);
+    if (sentences.length > 2) {
+        s = sentences.slice(0, 2).join(' ');
+    }
+    if (s.length > 220) {
+        s = s.substring(0, 217).trim() + '...';
+    }
+
+    if (s.length < 25) {
+        return `Engineered an end-to-end scalable application for ${projectName || 'enterprise workflows'}, optimizing API performance and data processing.`;
+    }
+
+    if (!/[.!?]$/.test(s)) s += '.';
+    return s;
+}
+
+            const pDesc = cleanProjectDescription(p.description, pName, pRole, pEnv);
 
             let pBullets = [];
             if (Array.isArray(p.responsibilities)) {
