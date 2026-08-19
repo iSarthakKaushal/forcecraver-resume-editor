@@ -983,6 +983,37 @@ function sanitizeAndEnrichStructuredData(data) {
                 pName = `Enterprise Software Project ${idx + 1}`;
             }
 
+            const pRole = p.role || data.title || "Developer";
+            const pEnv = p.environment || `${data.skills.languages || 'Java, Spring Boot'}, ${data.skills.frontend || 'React, Liferay DXP'}, ${data.skills.databases || 'PostgreSQL'}`;
+            const pClient = p.client || 'Confidential';
+            const pDesc = cleanProjectDescription(p.description, pName, pRole, pEnv);
+
+            let pBullets = [];
+            if (Array.isArray(p.responsibilities)) {
+                pBullets = p.responsibilities.map(b => String(b)).filter(Boolean);
+            } else if (typeof p.responsibilities === 'string') {
+                pBullets = p.responsibilities.split('\n').map(b => b.trim()).filter(Boolean);
+            }
+
+            // Always expand to 6-7 bullets
+            if (pBullets.length < 6) {
+                const expanded = generateHumanizedProjectBullets(pName, pEnv, pRole);
+                pBullets = Array.from(new Set([...pBullets, ...expanded])).slice(0, 7);
+            }
+
+            return {
+                name: pName,
+                role: pRole,
+                duration: p.duration || "12 Months",
+                client: pClient,
+                environment: pEnv,
+                description: pDesc,
+                responsibilities: pBullets
+            };
+        });
+    }
+}
+
 function cleanProjectDescription(rawDesc, projectName, role, env) {
     if (!rawDesc || typeof rawDesc !== 'string') {
         return `Engineered a scalable enterprise solution delivering automated processing, high availability, and robust API workflows.`;
@@ -1016,34 +1047,6 @@ function cleanProjectDescription(rawDesc, projectName, role, env) {
 
     if (!/[.!?]$/.test(s)) s += '.';
     return s;
-}
-
-            const pDesc = cleanProjectDescription(p.description, pName, pRole, pEnv);
-
-            let pBullets = [];
-            if (Array.isArray(p.responsibilities)) {
-                pBullets = p.responsibilities.map(b => String(b)).filter(Boolean);
-            } else if (typeof p.responsibilities === 'string') {
-                pBullets = p.responsibilities.split('\n').map(b => b.trim()).filter(Boolean);
-            }
-
-            // Always expand to 6-7 bullets
-            if (pBullets.length < 6) {
-                const expanded = generateHumanizedProjectBullets(pName, pEnv, pRole);
-                pBullets = Array.from(new Set([...pBullets, ...expanded])).slice(0, 7);
-            }
-
-            return {
-                name: pName,
-                role: pRole,
-                duration: p.duration || "12 Months",
-                client: pClient,
-                environment: pEnv,
-                description: pDesc,
-                responsibilities: pBullets
-            };
-        });
-    }
 }
 
 // Generate 6-7 realistic, impactful, natural domain-specific engineer bullet points
