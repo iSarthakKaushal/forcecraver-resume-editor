@@ -457,7 +457,11 @@ async function requestListener(req, res) {
     }
 
     // Static File Serving
-    let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url.split('?')[0]);
+    let relativePath = req.url === '/' ? 'index.html' : req.url.split('?')[0];
+    let filePath = path.join(__dirname, 'public', relativePath);
+    if (!fs.existsSync(filePath)) {
+        filePath = path.join(__dirname, relativePath);
+    }
     const ext = path.extname(filePath);
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
