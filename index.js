@@ -312,7 +312,7 @@ function executeGroqRequest(cleanedText, modelName) {
             ],
             response_format: { type: 'json_object' },
             temperature: 0.0,
-            max_tokens: 1500
+            max_tokens: 3500
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {
@@ -322,7 +322,7 @@ function executeGroqRequest(cleanedText, modelName) {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(payload)
             },
-            timeout: 20000
+            timeout: 40000
         }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);

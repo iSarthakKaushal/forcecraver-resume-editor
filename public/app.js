@@ -586,31 +586,31 @@ async function parseRawResumeTextWithNLP(fullBlock) {
     }
 
     // 3. Extract Professional Title
-    let professionalTitle = "Senior Full Stack & Cloud Developer";
-    const titleMatch = fullBlock.match(/\b(Senior\s+Full\s+Stack\s+Developer|Full\s+Stack\s+Developer|Liferay\s+DXP\s+Full\s+stack\s+Portal\s+Developer|Liferay\s+DXP\s+Developer|Technical\s+Lead|Tech\s+Lead|Software\s+Architect|Senior\s+Software\s+Engineer|Software\s+Engineer|Cloud\s+Architect|DevOps\s+Engineer|Java\s+Developer|Portal\s+Developer)\b/i);
+    let professionalTitle = "Senior Software Engineer";
+    const titleMatch = fullBlock.match(/\b(Senior\s+Salesforce\s+Developer|Salesforce\s+Developer|Salesforce\s+Technical\s+Lead|Salesforce\s+Consultant|Senior\s+Salesforce\s+Consultant|Site\s+Reliability\s+Engineer|DevOps\s+Engineer|Senior\s+Full\s+Stack\s+Developer|Full\s+Stack\s+Developer|Technical\s+Lead|Tech\s+Lead|Software\s+Architect|Senior\s+Software\s+Engineer|Software\s+Engineer|Cloud\s+Architect|Java\s+Developer)\b/i);
     if (titleMatch) {
         professionalTitle = titleMatch[1].trim();
     }
 
-    // 4. Categorized Skills (Define BEFORE Summary so summary normalizer has access)
+    // 4. Categorized Skills (Extract directly from text without hardcoded fallbacks)
     const skillsObj = {
-        cloud: "AWS (EC2, S3, RDS, Lambda, CloudFront), Azure DevOps, Docker, Kubernetes, CI/CD, Tomcat Server",
-        languages: "Java 8/11/17, J2EE, Spring Boot, REST APIs, JSR 168, JSR 286, Hibernate, Microservices, Python",
-        frontend: "Liferay DXP 7.x/6.x, React.js, JavaScript (ES6+), HTML5, CSS3, jQuery, AJAX",
-        databases: "IBM DB2, Oracle, MySQL, MS SQL, Informix, Redis Caching",
-        tools: "Git, SVN, Eclipse IDE, VS Code, SonarQube, Jira, Maven, Gradle, Postman, Agile/Scrum"
+        cloud: "",
+        languages: "",
+        frontend: "",
+        databases: "",
+        tools: ""
     };
 
-    const skillsMatch = fullBlock.match(/(?:skills|core\s+competencies|technical\s+skills|technical\s+expertise|technologies)\s*[:.-]?\s*([\s\S]+?)(?=(?:experience\s+details|work\s+experience|professional\s+experience|projects|education|certifications)\b)/i);
+    const skillsMatch = fullBlock.match(/(?:skills|core\s+competencies|technical\s+skills|technical\s+expertise|technologies|core\s+proficiencies)\s*[:.-]?\s*([\s\S]+?)(?=(?:experience\s+details|work\s+experience|professional\s+experience|projects|education|certifications)\b)/i);
     if (skillsMatch) {
         const rawSkills = skillsMatch[1];
-        const extractedTokens = rawSkills.split(/[\n,;|•·\t]+/).map(s => s.trim()).filter(s => s.length > 1 && s.length < 40 && !/category|tools|servers|database|systems/i.test(s));
+        const extractedTokens = rawSkills.split(/[\n,;|•·\t]+/).map(s => s.trim()).filter(s => s.length > 1 && s.length < 50 && !/category|tools|servers|database|systems/i.test(s));
         
-        const cloudTokens = extractedTokens.filter(t => /aws|azure|gcp|docker|kubernetes|ci\/cd|cloud|terraform|jenkins|tomcat|iis|server/i.test(t));
-        const langTokens = extractedTokens.filter(t => /java|spring|boot|microservice|python|c#|\.net|node|rest|api|hibernate|jsr\s*168|jsr\s*286/i.test(t));
-        const frontTokens = extractedTokens.filter(t => /react|angular|vue|liferay|portal|javascript|html|css|jquery|ajax|typescript|xml|json/i.test(t));
-        const dbTokens = extractedTokens.filter(t => /sql|postgres|oracle|mongo|redis|database|dynamo|db2|informix/i.test(t));
-        const toolTokens = extractedTokens.filter(t => /git|jira|maven|gradle|postman|junit|sonar|agile|scrum|linux|svn|eclipse|ado/i.test(t));
+        const cloudTokens = extractedTokens.filter(t => /sales\s*cloud|service\s*cloud|community\s*cloud|cpq|aws|azure|gcp|docker|kubernetes|ci\/cd|cloud|terraform|jenkins|server/i.test(t));
+        const langTokens = extractedTokens.filter(t => /apex|lwc|aura|visualforce|soql|sosl|triggers|java|spring|boot|python|c#|\.net|node|rest|api|hibernate|javascript|typescript/i.test(t));
+        const frontTokens = extractedTokens.filter(t => /react|angular|vue|lightning|html|css|jquery|ajax|json|xml/i.test(t));
+        const dbTokens = extractedTokens.filter(t => /sql|soql|sosl|postgres|oracle|mongo|redis|database|dynamo/i.test(t));
+        const toolTokens = extractedTokens.filter(t => /git|jira|salesforce\s*cli|gearset|bluecanvas|copado|postman|junit|sonar|agile|scrum|vs\s*code|workato|shopify|zuora/i.test(t));
 
         if (cloudTokens.length) skillsObj.cloud = Array.from(new Set(cloudTokens)).join(', ');
         if (langTokens.length) skillsObj.languages = Array.from(new Set(langTokens)).join(', ');
@@ -652,23 +652,6 @@ async function parseRawResumeTextWithNLP(fullBlock) {
         lines.forEach(l => {
             const clean = filterAndCleanEduCertText(l);
             if (clean && clean.length > 3 && clean.length < 140) {
-                eduList.push(clean);
-            }
-        });
-    }
-
-    // Fallback line scanner if sections were not cleanly captured
-    if (certsList.length === 0 || eduList.length === 0) {
-        rawLines.forEach(l => {
-            const clean = filterAndCleanEduCertText(l);
-            if (!clean) return;
-            if (/^(?:server|tools|software|o\/s|environment|duration|location|team\s*size|client|organization)\s*[:.-]/i.test(clean)) return;
-
-            if (certsList.length === 0 && /datadog|new\s*relic|google\s*cloud|jmeter|aws|azure|oracle|scrum|pmp|liferay|certified|certification|diploma/i.test(clean) && !/degree|college|university|school|b\.?tech|m\.?tech|bca|mca|b\.?e\b/i.test(clean) && clean.length < 100) {
-                certsList.push(clean);
-            }
-
-            if (eduList.length === 0 && /\b(B\.?Tech|M\.?Tech|MCA|BCA|B\.?Sc|M\.?Sc|B\.?E\b|M\.?E\b|Class\s*XII|Class\s*X|Bachelor|Master|High\s*School|College|University)\b/i.test(clean) && clean.length < 120) {
                 eduList.push(clean);
             }
         });
