@@ -560,17 +560,7 @@ async function parseRawResumeTextWithNLP(fullBlock) {
         professionalTitle = titleMatch[1].trim();
     }
 
-    // 4. Extract Summary
-    let summaryText = "";
-    const summaryMatch = fullBlock.match(/(?:professional\s+summary|executive\s+summary|summary|profile\s+summary)\s*[:.-]?\s*([\s\S]+?)(?=(?:skills|core\s+competencies|technical\s+skills|experience\s+details|work\s+experience|experience|employment|projects|education|certifications)\b)/i);
-    if (summaryMatch) {
-        summaryText = normalizeProfessionalSummary(summaryMatch[1], professionalTitle, expBadge, skillsObj);
-    }
-    if (!summaryText || summaryText.length < 50) {
-        summaryText = generateDefaultSummary(professionalTitle, expBadge, skillsObj);
-    }
-
-    // 5. Categorized Skills
+    // 4. Categorized Skills (Define BEFORE Summary so summary normalizer has access)
     const skillsObj = {
         cloud: "AWS (EC2, S3, RDS, Lambda, CloudFront), Azure DevOps, Docker, Kubernetes, CI/CD, Tomcat Server",
         languages: "Java 8/11/17, J2EE, Spring Boot, REST APIs, JSR 168, JSR 286, Hibernate, Microservices, Python",
@@ -595,6 +585,16 @@ async function parseRawResumeTextWithNLP(fullBlock) {
         if (frontTokens.length) skillsObj.frontend = Array.from(new Set(frontTokens)).join(', ');
         if (dbTokens.length) skillsObj.databases = Array.from(new Set(dbTokens)).join(', ');
         if (toolTokens.length) skillsObj.tools = Array.from(new Set(toolTokens)).join(', ');
+    }
+
+    // 5. Extract Summary
+    let summaryText = "";
+    const summaryMatch = fullBlock.match(/(?:professional\s+summary|executive\s+summary|summary|profile\s+summary)\s*[:.-]?\s*([\s\S]+?)(?=(?:skills|core\s+competencies|technical\s+skills|experience\s+details|work\s+experience|experience|employment|projects|education|certifications)\b)/i);
+    if (summaryMatch) {
+        summaryText = normalizeProfessionalSummary(summaryMatch[1], professionalTitle, expBadge, skillsObj);
+    }
+    if (!summaryText || summaryText.length < 50) {
+        summaryText = generateDefaultSummary(professionalTitle, expBadge, skillsObj);
     }
 
     // 6. Extract Education & Certifications
