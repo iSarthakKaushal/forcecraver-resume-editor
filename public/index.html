@@ -281,28 +281,41 @@
                             </div>
                         </div>
 
-                        <!-- Accordion 4: Education & Certifications -->
+                        <!-- Accordion 4: Certifications -->
+                        <div class="form-card">
+                            <div class="form-card-header" onclick="toggleAccordion('certsCard')">
+                                <div class="header-title">
+                                    <i data-lucide="award"></i>
+                                    <h4>Certifications & Credentials</h4>
+                                </div>
+                                <i data-lucide="chevron-down" class="accordion-icon" id="certsCardIcon"></i>
+                            </div>
+                            <div class="form-card-body" id="certsCardBody">
+                                <div class="form-group">
+                                    <label>Certifications (One per line)</label>
+                                    <textarea id="inputCertifications" class="form-textarea" rows="3" placeholder="Datadog: Site Reliability Engineering&#10;New Relic: Observability Foundations&#10;Google Cloud: Associate Cloud Engineer&#10;Apache JMeter Performance Engineer"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accordion 5: Education -->
                         <div class="form-card">
                             <div class="form-card-header" onclick="toggleAccordion('eduCard')">
                                 <div class="header-title">
                                     <i data-lucide="graduation-cap"></i>
-                                    <h4>Education & Certifications</h4>
+                                    <h4>Education & Qualifications</h4>
                                 </div>
                                 <i data-lucide="chevron-down" class="accordion-icon" id="eduCardIcon"></i>
                             </div>
                             <div class="form-card-body" id="eduCardBody">
                                 <div class="form-group">
-                                    <label>Certifications (One per line or comma separated)</label>
-                                    <textarea id="inputCertifications" class="form-textarea" rows="2" placeholder="AWS Certified Solutions Architect&#10;Microsoft Certified: Azure Fundamentals (AZ-900)"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label>Education Details</label>
-                                    <textarea id="inputEducation" class="form-textarea" rows="2" placeholder="Master of Computer Applications (MCA) – UPTU&#10;Bachelor of Science (Computer Science)"></textarea>
+                                    <label>Education Details (One per line)</label>
+                                    <textarea id="inputEducation" class="form-textarea" rows="3" placeholder="B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA&#10;Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%&#10;Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"></textarea>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Accordion 5: Professional Experience -->
+                        <!-- Accordion 6: Professional Experience -->
                         <div class="form-card">
                             <div class="form-card-header" onclick="toggleAccordion('expCard')">
                                 <div class="header-title">
@@ -323,7 +336,7 @@
                             </div>
                         </div>
 
-                        <!-- Accordion 6: Projects Detail -->
+                        <!-- Accordion 7: Projects Detail -->
                         <div class="form-card">
                             <div class="form-card-header" onclick="toggleAccordion('projectsCard')">
                                 <div class="header-title">
@@ -379,11 +392,19 @@
                                 </div>
                             </div>
 
-                            <!-- Section: Education & Certifications -->
-                            <div class="res-section" id="secEdu">
-                                <div class="res-section-title">EDUCATION & CERTIFICATIONS</div>
+                            <!-- Section: Certifications (Separate Distinct Section) -->
+                            <div class="res-section" id="secCertifications">
+                                <div class="res-section-title">CERTIFICATIONS</div>
+                                <div class="res-certs-container" id="previewCertsContainer">
+                                    <!-- Dynamic Certifications Injected Here -->
+                                </div>
+                            </div>
+
+                            <!-- Section: Education (Separate Distinct Section) -->
+                            <div class="res-section" id="secEducation">
+                                <div class="res-section-title">EDUCATION</div>
                                 <div class="res-edu-container" id="previewEduContainer">
-                                    <!-- Dynamic Education & Certs Injected Here -->
+                                    <!-- Dynamic Education Injected Here -->
                                 </div>
                             </div>
 

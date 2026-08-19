@@ -1083,27 +1083,37 @@ html, body {
     color: #1e293b;
 }
 
-/* Education & Certifications */
-.res-edu-container {
+/* Certifications & Education */
+.res-certs-container, .res-edu-container {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
 }
 
-.res-edu-row {
+.res-bullet-list {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.res-bullet-list li {
     font-size: 9.2pt;
-    display: grid;
-    grid-template-columns: 130px 10px 1fr;
-    line-height: 1.4;
-}
-
-.res-edu-label {
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.res-edu-val {
     color: #1e293b;
+    line-height: 1.4;
+    position: relative;
+    padding-left: 16px;
+}
+
+.res-bullet-list li::before {
+    content: "•";
+    position: absolute;
+    left: 2px;
+    top: 0;
+    color: #0f172a;
+    font-weight: 700;
 }
 
 /* Experience List */

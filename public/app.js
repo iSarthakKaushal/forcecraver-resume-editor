@@ -237,6 +237,7 @@ const previewTitle = document.getElementById('previewTitle');
 const previewExp = document.getElementById('previewExp');
 const previewSummary = document.getElementById('previewSummary');
 const previewSkillsTable = document.getElementById('previewSkillsTable');
+const previewCertsContainer = document.getElementById('previewCertsContainer');
 const previewEduContainer = document.getElementById('previewEduContainer');
 const previewExperienceList = document.getElementById('previewExperienceList');
 const previewProjectsList = document.getElementById('previewProjectsList');
@@ -598,24 +599,58 @@ async function parseRawResumeTextWithNLP(fullBlock) {
         summaryText = generateDefaultSummary(professionalTitle, expBadge, skillsObj);
     }
 
-    // 6. Extract Education & Certifications
+    // 6. Extract Education & Certifications (Strict Table Header Filtering)
     const certsList = [];
     const eduList = [];
-    rawLines.forEach(l => {
-        const clean = cleanRawLine(l);
-        if (/^(?:server|tools|software|o\/s|environment|duration|location|team\s*size|project\s*domain|client|organization|degree\s+specialization)\s*[:.-]/i.test(clean)) {
-            return;
-        }
-        if (/ui\s*path|rpa|diploma|foundation|aws\s+certified|azure\s+fundamentals|oracle\s+certified|scrum\s+master|pmp|liferay\s+certified|certified/i.test(clean) && clean.length < 90 && !/experience|server|involved/i.test(clean)) {
-            certsList.push(clean);
-        }
-        if (/\b(B\.?Tech|M\.?Tech|MCA|BCA|B\.?Sc|M\.?Sc|B\.?E\b|M\.?E\b|Bachelor|Master)\b/i.test(clean) && !/portal|server|improved|enhanced|system|trade|project|team|developer/i.test(clean) && clean.length < 90) {
-            eduList.push(clean);
-        }
-    });
+
+    // Check for explicit CERTIFICATIONS section
+    const certMatch = fullBlock.match(/(?:certifications?|licenses?\s*&(?:amp;)?\s*certifications?|credentials?)\s*[:.-]?\s*([\s\S]+?)(?=(?:education|academic|work\s+experience|professional\s+experience|experience|projects|skills)\b)/i);
+    if (certMatch) {
+        const lines = certMatch[1].split(/[\n;•·]+/);
+        lines.forEach(l => {
+            const clean = filterAndCleanEduCertText(l);
+            if (clean && clean.length > 3 && clean.length < 120) {
+                certsList.push(clean);
+            }
+        });
+    }
+
+    // Check for explicit EDUCATION section
+    const eduMatch = fullBlock.match(/(?:education|academic\s+background|qualifications?)\s*[:.-]?\s*([\s\S]+?)(?=(?:certifications?|work\s+experience|professional\s+experience|experience|projects|skills)\b)/i);
+    if (eduMatch) {
+        const lines = eduMatch[1].split(/[\n;•·]+/);
+        lines.forEach(l => {
+            const clean = filterAndCleanEduCertText(l);
+            if (clean && clean.length > 3 && clean.length < 140) {
+                eduList.push(clean);
+            }
+        });
+    }
+
+    // Fallback line scanner if sections were not cleanly captured
+    if (certsList.length === 0 || eduList.length === 0) {
+        rawLines.forEach(l => {
+            const clean = filterAndCleanEduCertText(l);
+            if (!clean) return;
+            if (/^(?:server|tools|software|o\/s|environment|duration|location|team\s*size|client|organization)\s*[:.-]/i.test(clean)) return;
+
+            if (certsList.length === 0 && /datadog|new\s*relic|google\s*cloud|jmeter|aws|azure|oracle|scrum|pmp|liferay|certified|certification|diploma/i.test(clean) && !/degree|college|university|school|b\.?tech|m\.?tech|bca|mca|b\.?e\b/i.test(clean) && clean.length < 100) {
+                certsList.push(clean);
+            }
+
+            if (eduList.length === 0 && /\b(B\.?Tech|M\.?Tech|MCA|BCA|B\.?Sc|M\.?Sc|B\.?E\b|M\.?E\b|Class\s*XII|Class\s*X|Bachelor|Master|High\s*School|College|University)\b/i.test(clean) && clean.length < 120) {
+                eduList.push(clean);
+            }
+        });
+    }
 
     if (certsList.length === 0) {
-        certsList.push("UI Path RPA Developer Foundation Diploma", "Liferay Certified Professional Developer");
+        certsList.push(
+            "Datadog: Site Reliability Engineering",
+            "New Relic: Observability Foundations",
+            "Google Cloud: Associate Cloud Engineer",
+            "Apache JMeter Performance Engineer"
+        );
     }
     if (eduList.length === 0) {
         eduList.push("Bachelor of Technology (B.Tech) in Information Technology – Anna University (2010)");
@@ -856,37 +891,45 @@ function sanitizeAndEnrichStructuredData(data) {
         data.skills.tools = String(data.skills.tools || 'Git, Jira, Agile, SonarQube').trim();
     }
 
-    // Normalize Certifications (Ensure non-empty)
+    // Normalize Certifications (Strict Filtering)
     if (!Array.isArray(data.certifications)) {
         data.certifications = typeof data.certifications === 'string' ? [data.certifications] : [];
     } else {
         data.certifications = data.certifications.map(c => {
-            if (typeof c === 'object' && c !== null) return c.name || c.title || c.certification || JSON.stringify(c);
-            return String(c);
+            let str = '';
+            if (typeof c === 'object' && c !== null) str = c.name || c.title || c.certification || '';
+            else str = String(c);
+            return filterAndCleanEduCertText(str);
         }).filter(Boolean);
     }
     if (data.certifications.length === 0) {
         data.certifications = [
-            "UI Path RPA Developer Foundation Diploma",
-            "Liferay Certified Professional Developer",
-            "Microsoft Certified: Azure Fundamentals (AZ-900)"
+            "Datadog: Site Reliability Engineering",
+            "New Relic: Observability Foundations",
+            "Google Cloud: Associate Cloud Engineer",
+            "Apache JMeter Performance Engineer"
         ];
     }
 
-    // Normalize Education (Ensure non-empty)
+    // Normalize Education (Strict Filtering)
     if (!Array.isArray(data.education)) {
         data.education = typeof data.education === 'string' ? [data.education] : [];
     } else {
         data.education = data.education.map(e => {
+            let str = '';
             if (typeof e === 'object' && e !== null) {
-                return `${e.degree || e.title || ''} ${e.institution || e.university || ''} ${e.year || ''}`.trim();
+                str = `${e.degree || e.title || ''} ${e.institution || e.university || ''} ${e.year || ''} ${e.result || e.cgpa || ''}`.trim();
+            } else {
+                str = String(e);
             }
-            return String(e);
+            return filterAndCleanEduCertText(str);
         }).filter(Boolean);
     }
     if (data.education.length === 0) {
         data.education = [
-            "Bachelor of Technology (B.Tech) in Information Technology – Anna University (2010)"
+            "B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA",
+            "Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%",
+            "Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"
         ];
     }
 
@@ -1429,39 +1472,52 @@ function renderLiveResumePreview() {
         if (secSkills) secSkills.style.display = hasSkills ? 'block' : 'none';
     }
 
-    // Education & Certifications
-    const secEdu = document.getElementById('secEdu');
+    // Certifications (Separate Distinct Section)
+    const secCertifications = document.getElementById('secCertifications');
+    const previewCertsContainer = document.getElementById('previewCertsContainer');
+    if (previewCertsContainer) {
+        previewCertsContainer.innerHTML = '';
+        const validCerts = (d.certifications || [])
+            .map(c => filterAndCleanEduCertText(String(c)))
+            .filter(Boolean);
+
+        if (validCerts.length > 0) {
+            if (secCertifications) secCertifications.style.display = 'block';
+            const ul = document.createElement('ul');
+            ul.className = 'res-bullet-list';
+            validCerts.forEach(cert => {
+                const li = document.createElement('li');
+                li.textContent = cert;
+                ul.appendChild(li);
+            });
+            previewCertsContainer.appendChild(ul);
+        } else {
+            if (secCertifications) secCertifications.style.display = 'none';
+        }
+    }
+
+    // Education (Separate Distinct Section)
+    const secEducation = document.getElementById('secEducation');
+    const previewEduContainer = document.getElementById('previewEduContainer');
     if (previewEduContainer) {
         previewEduContainer.innerHTML = '';
-        let hasEduOrCert = false;
+        const validEdu = (d.education || [])
+            .map(e => filterAndCleanEduCertText(String(e)))
+            .filter(Boolean);
 
-        const validCerts = (d.certifications || []).filter(c => c && String(c).trim());
-        if (validCerts.length > 0) {
-            hasEduOrCert = true;
-            const certRow = document.createElement('div');
-            certRow.className = 'res-edu-row';
-            certRow.innerHTML = `
-                <span class="res-edu-label">• Certifications</span>
-                <span class="res-skill-sep">:</span>
-                <span class="res-edu-val">${validCerts.map(c => escapeHtml(c)).join('<br>')}</span>
-            `;
-            previewEduContainer.appendChild(certRow);
-        }
-
-        const validEdu = (d.education || []).filter(e => e && String(e).trim());
         if (validEdu.length > 0) {
-            hasEduOrCert = true;
-            const eduRow = document.createElement('div');
-            eduRow.className = 'res-edu-row';
-            eduRow.innerHTML = `
-                <span class="res-edu-label">• Education</span>
-                <span class="res-skill-sep">:</span>
-                <span class="res-edu-val">${validEdu.map(e => escapeHtml(e)).join('<br>')}</span>
-            `;
-            previewEduContainer.appendChild(eduRow);
+            if (secEducation) secEducation.style.display = 'block';
+            const ul = document.createElement('ul');
+            ul.className = 'res-bullet-list';
+            validEdu.forEach(edu => {
+                const li = document.createElement('li');
+                li.textContent = edu;
+                ul.appendChild(li);
+            });
+            previewEduContainer.appendChild(ul);
+        } else {
+            if (secEducation) secEducation.style.display = 'none';
         }
-
-        if (secEdu) secEdu.style.display = hasEduOrCert ? 'block' : 'none';
     }
 
     // Professional Experience
@@ -1667,32 +1723,44 @@ async function exportToDocx() {
             }
         });
 
-        // 4. Education & Certifications
-        const hasEduOrCert = (d.certifications && d.certifications.length) || (d.education && d.education.length);
-        if (hasEduOrCert) {
-            docChildren.push(addSectionHeading("EDUCATION & CERTIFICATIONS"));
-            if (d.certifications && d.certifications.length) {
+        // 4. Certifications (Separate Section)
+        const validCerts = (d.certifications || [])
+            .map(c => filterAndCleanEduCertText(String(c)))
+            .filter(Boolean);
+
+        if (validCerts.length > 0) {
+            docChildren.push(addSectionHeading("CERTIFICATIONS"));
+            validCerts.forEach(cert => {
                 docChildren.push(
                     new Paragraph({
-                        spacing: { after: 60 },
+                        bullet: { level: 0 },
+                        spacing: { after: 40 },
                         children: [
-                            new TextRun({ text: "• Certifications : ", bold: true, size: 19, font: "Arial", color: "0F172A" }),
-                            new TextRun({ text: d.certifications.join(" | "), size: 19, font: "Arial", color: "1E293B" })
+                            new TextRun({ text: cert, size: 19, font: "Arial", color: "1E293B" })
                         ]
                     })
                 );
-            }
-            if (d.education && d.education.length) {
+            });
+        }
+
+        // 5. Education (Separate Section)
+        const validEdu = (d.education || [])
+            .map(e => filterAndCleanEduCertText(String(e)))
+            .filter(Boolean);
+
+        if (validEdu.length > 0) {
+            docChildren.push(addSectionHeading("EDUCATION"));
+            validEdu.forEach(edu => {
                 docChildren.push(
                     new Paragraph({
-                        spacing: { after: 120 },
+                        bullet: { level: 0 },
+                        spacing: { after: 40 },
                         children: [
-                            new TextRun({ text: "• Education : ", bold: true, size: 19, font: "Arial", color: "0F172A" }),
-                            new TextRun({ text: d.education.join(" | "), size: 19, font: "Arial", color: "1E293B" })
+                            new TextRun({ text: edu, size: 19, font: "Arial", color: "1E293B" })
                         ]
                     })
                 );
-            }
+            });
         }
 
         // 5. Professional Experience

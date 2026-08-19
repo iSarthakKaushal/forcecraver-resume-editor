@@ -54,8 +54,10 @@ CRITICAL RULES:
 4. SUMMARY: Exactly 3 to 4 crisp sentences summarizing overall career background, core tech stack, and primary strengths.
    STRICT RULE: NEVER include project highlights, client names, tool dumps, or bullet points in the summary.
 5. SKILLS: Categorize into: cloud, languages, frontend, databases, tools.
-6. CERTIFICATIONS: Array of verified credentials (e.g. ["AWS Cloud Practitioner Essentials"]).
-7. EDUCATION: Array of degrees with university/year (e.g. ["Master of Computer Applications (MCA) – Amity University (2024–2026)"]).
+6. CERTIFICATIONS: Array of verified credentials only (e.g. ["Datadog: Site Reliability Engineering", "New Relic: Observability Foundations", "Google Cloud: Associate Cloud Engineer", "Apache JMeter Performance Engineer"]).
+   STRICT RULE: NEVER mix education table headers like "Degree / Exam", "Year", "Institution", "Result" into certifications.
+7. EDUCATION: Array of degrees with university/school/year/grades (e.g. ["B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA", "Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%", "Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"]).
+   STRICT RULE: NEVER include table headers like "Degree / Exam", "Year", "Institution", "Result" as an education entry.
 8. COMPANIES: Array of all employers (company, role, duration, location). Always set first (present) company to "Forcecraver Technologies Pvt. Ltd.". Retain authentic role and authentic duration.
 9. PROJECTS: Array of candidate's authentic projects from the PROJECTS section (e.g., "Scene Text Recognition & Assistive Vision System", "Face Recognition System", "Patient Crowdfunding Platform").
    STRICT RULE: NEVER use company or client names as project titles.
