@@ -1065,13 +1065,16 @@ html, body {
 .res-skill-row {
     font-size: 9.2pt;
     display: grid;
-    grid-template-columns: 175px 10px 1fr;
+    grid-template-columns: minmax(130px, auto) 10px 1fr;
+    align-items: baseline;
     line-height: 1.4;
 }
 
 .res-skill-label {
     font-weight: 700;
     color: #0f172a;
+    white-space: nowrap;
+    padding-right: 4px;
 }
 
 .res-skill-sep {
@@ -1081,6 +1084,30 @@ html, body {
 
 .res-skill-val {
     color: #1e293b;
+}
+
+/* Dynamic Skills Container in Left Editor */
+.dynamic-skills-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dynamic-skill-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dynamic-skill-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 
 /* Certifications & Education */

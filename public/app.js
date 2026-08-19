@@ -29,13 +29,13 @@ function getInitialResumeData() {
         title: "Senior Liferay DXP Full Stack Portal Developer",
         experience: "Experience: (9+ Years)",
         summary: "Dynamic and results-driven Senior Software Engineer with 9+ years of extensive experience in architecting, developing, and deploying enterprise-grade web applications and cloud solutions. Proven expertise in Liferay DXP, Java/J2EE, Spring Boot, Microservices, and AWS/Azure Cloud environments. Strong track record of leading distributed teams, delivering high-impact client projects, and optimizing application scalability and performance.",
-        skills: {
-            cloud: "AWS (EC2, S3, RDS, Lambda, CloudFront), Azure DevOps, Docker, Kubernetes, CI/CD, Tomcat Server",
-            languages: "Java 8/11/17, J2EE, Spring Boot, Hibernate, REST APIs, JSR 168, JSR 286, Microservices, Python",
-            frontend: "Liferay DXP 7.x/6.x, React.js, JavaScript (ES6+), HTML5, CSS3, jQuery, AJAX",
-            databases: "IBM DB2, Oracle, MySQL, MS SQL, Informix, Redis Caching",
-            tools: "Git, SVN, Eclipse IDE, VS Code, SonarQube, Jira, Maven, Gradle, Postman, Agile/Scrum"
-        },
+        skills: [
+            { label: "Cloud & DevOps", value: "AWS (EC2, S3, RDS, Lambda, CloudFront), Azure DevOps, Docker, Kubernetes, CI/CD, Tomcat Server" },
+            { label: "Languages & Stack", value: "Java 8/11/17, J2EE, Spring Boot, Hibernate, REST APIs, JSR 168, JSR 286, Microservices, Python" },
+            { label: "Frontend & Portals", value: "Liferay DXP 7.x/6.x, React.js, JavaScript (ES6+), HTML5, CSS3, jQuery, AJAX" },
+            { label: "Databases & Storage", value: "IBM DB2, Oracle, MySQL, MS SQL, Informix, Redis Caching" },
+            { label: "Tools & Automation", value: "Git, SVN, Eclipse IDE, VS Code, SonarQube, Jira, Maven, Gradle, Postman, Agile/Scrum" }
+        ],
         certifications: [
             "UI Path RPA Developer Foundation Diploma",
             "Liferay Certified Professional Developer",
@@ -221,13 +221,10 @@ const inputName = document.getElementById('inputName');
 const inputTitle = document.getElementById('inputTitle');
 const inputExp = document.getElementById('inputExp');
 const inputSummary = document.getElementById('inputSummary');
-const inputSkillCloud = document.getElementById('inputSkillCloud');
-const inputSkillLanguages = document.getElementById('inputSkillLanguages');
-const inputSkillFrontend = document.getElementById('inputSkillFrontend');
-const inputSkillDatabases = document.getElementById('inputSkillDatabases');
-const inputSkillTools = document.getElementById('inputSkillTools');
 const inputCertifications = document.getElementById('inputCertifications');
 const inputEducation = document.getElementById('inputEducation');
+const skillsContainer = document.getElementById('skillsContainer');
+const addSkillCategoryBtn = document.getElementById('addSkillCategoryBtn');
 const experienceContainer = document.getElementById('experienceContainer');
 const projectsContainer = document.getElementById('projectsContainer');
 
@@ -760,7 +757,7 @@ async function parseRawResumeTextWithNLP(fullBlock) {
         title: professionalTitle,
         experience: expBadge,
         summary: summaryText,
-        skills: skillsObj,
+        skills: normalizeSkillsStructure(skillsObj),
         certifications: Array.from(new Set(certsList)),
         education: Array.from(new Set(eduList)),
         companies: companies,
@@ -797,6 +794,41 @@ function filterAndCleanEduCertText(text) {
         return '';
     }
     return s;
+}
+
+function normalizeSkillsStructure(skillsInput) {
+    if (!skillsInput) return [];
+    if (Array.isArray(skillsInput)) {
+        return skillsInput.map(item => {
+            if (typeof item === 'object' && item !== null) {
+                const label = item.label || item.category || item.name || 'Core Skills';
+                const val = item.value || item.val || item.skills || '';
+                return { label: String(label).trim(), value: String(val).trim() };
+            }
+            return { label: 'Key Skills', value: String(item).trim() };
+        }).filter(s => s.value.length > 0);
+    }
+    if (typeof skillsInput === 'object') {
+        const list = [];
+        const labelMap = {
+            cloud: 'Cloud & DevOps',
+            languages: 'Languages & Stack',
+            frontend: 'Frontend & Portals',
+            databases: 'Databases & Storage',
+            tools: 'Tools & Automation'
+        };
+        for (const [k, v] of Object.entries(skillsInput)) {
+            if (v && String(v).trim()) {
+                const label = labelMap[k] || k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+                list.push({ label: label.charAt(0).toUpperCase() + label.slice(1), value: String(v).trim() });
+            }
+        }
+        return list;
+    }
+    if (typeof skillsInput === 'string' && skillsInput.trim()) {
+        return [{ label: 'Core Technical Skills', value: skillsInput.trim() }];
+    }
+    return [];
 }
 
 function normalizeExperienceString(exp, role, summary, companies) {
@@ -885,29 +917,16 @@ function sanitizeAndEnrichStructuredData(data) {
     // Normalize Summary (Strict isolation from project highlights)
     data.summary = normalizeProfessionalSummary(data.summary, data.title, data.experience, data.skills);
 
-    // Normalize Skills
-    if (!data.skills || typeof data.skills !== 'object' || Array.isArray(data.skills)) {
-        const rawTokens = Array.isArray(data.skills) ? data.skills : (typeof data.skills === 'string' ? data.skills.split(/[,;\n]+/).map(s => s.trim()) : []);
-        
-        const cloudTokens = rawTokens.filter(t => /aws|azure|gcp|docker|kubernetes|ci\/cd|cloud|terraform|jenkins|tomcat|iis|server/i.test(t));
-        const langTokens = rawTokens.filter(t => /java|spring|boot|microservice|python|c#|\.net|node|rest|api|hibernate|jsr\s*168|jsr\s*286/i.test(t));
-        const frontTokens = rawTokens.filter(t => /react|angular|vue|liferay|portal|javascript|html|css|jquery|ajax|typescript|xml|json|kaleo|wcm/i.test(t));
-        const dbTokens = rawTokens.filter(t => /sql|postgres|oracle|mongo|redis|database|dynamo|db2|informix/i.test(t));
-        const toolTokens = rawTokens.filter(t => /git|jira|maven|gradle|postman|junit|sonar|agile|scrum|linux|svn|eclipse|ado|studio/i.test(t));
-
-        data.skills = {
-            cloud: cloudTokens.length ? cloudTokens.join(', ') : 'AWS, Azure DevOps, Docker, Kubernetes, CI/CD, Tomcat Server',
-            languages: langTokens.length ? langTokens.join(', ') : 'Java 8/11/17, J2EE, Spring Boot, REST APIs, JSR 168, JSR 286',
-            frontend: frontTokens.length ? frontTokens.join(', ') : 'Liferay DXP 7.x/6.x, React, JavaScript, HTML5, CSS3, jQuery, AJAX',
-            databases: dbTokens.length ? dbTokens.join(', ') : 'IBM DB2, Oracle 11g, MySQL, MS SQL, Informix, Redis',
-            tools: toolTokens.length ? toolTokens.join(', ') : 'Git, SVN, Eclipse IDE, VS Code, SonarQube, Jira, Agile'
-        };
-    } else {
-        data.skills.cloud = String(data.skills.cloud || 'AWS, Azure DevOps, Docker, CI/CD').trim();
-        data.skills.languages = String(data.skills.languages || 'Java, Spring Boot, REST APIs').trim();
-        data.skills.frontend = String(data.skills.frontend || 'Liferay DXP, React, HTML5, CSS3').trim();
-        data.skills.databases = String(data.skills.databases || 'PostgreSQL, Oracle, MySQL, IBM DB2').trim();
-        data.skills.tools = String(data.skills.tools || 'Git, Jira, Agile, SonarQube').trim();
+    // Normalize Skills as dynamic array of categories
+    data.skills = normalizeSkillsStructure(data.skills);
+    if (!data.skills || data.skills.length === 0) {
+        data.skills = [
+            { label: "Cloud & DevOps", value: "AWS, Azure DevOps, Docker, Kubernetes, CI/CD" },
+            { label: "Languages & Stack", value: "Java, Python, Spring Boot, REST APIs" },
+            { label: "Frontend & UI", value: "React, JavaScript, HTML5, CSS3" },
+            { label: "Databases & Storage", value: "PostgreSQL, Oracle, MySQL, Redis" },
+            { label: "Tools & Methodologies", value: "Git, VS Code, Jira, Agile, Scrum" }
+        ];
     }
 
     // Normalize Certifications (Strict Filtering)
@@ -1211,13 +1230,11 @@ function renderEntireWorkspace() {
     if (inputTitle) inputTitle.value = d.title || '';
     if (inputExp) inputExp.value = d.experience || '';
     if (inputSummary) inputSummary.value = d.summary || '';
-    if (inputSkillCloud) inputSkillCloud.value = d.skills.cloud || '';
-    if (inputSkillLanguages) inputSkillLanguages.value = d.skills.languages || '';
-    if (inputSkillFrontend) inputSkillFrontend.value = d.skills.frontend || '';
-    if (inputSkillDatabases) inputSkillDatabases.value = d.skills.databases || '';
-    if (inputSkillTools) inputSkillTools.value = d.skills.tools || '';
     if (inputCertifications) inputCertifications.value = (d.certifications || []).join('\n');
     if (inputEducation) inputEducation.value = (d.education || []).join('\n');
+
+    // Render Dynamic Skills Form in Editor
+    renderDynamicSkillsForm();
 
     // Render Dynamic Experience Cards in Editor
     renderDynamicExperienceForm();
@@ -1248,11 +1265,6 @@ function setupLiveFormBindings() {
     bind(inputTitle, 'title');
     bind(inputExp, 'experience');
     bind(inputSummary, 'summary');
-    bind(inputSkillCloud, 'skills', 'cloud');
-    bind(inputSkillLanguages, 'skills', 'languages');
-    bind(inputSkillFrontend, 'skills', 'frontend');
-    bind(inputSkillDatabases, 'skills', 'databases');
-    bind(inputSkillTools, 'skills', 'tools');
 
     if (inputCertifications) {
         inputCertifications.addEventListener('input', (e) => {
@@ -1268,6 +1280,65 @@ function setupLiveFormBindings() {
         });
     }
 }
+
+// Render Form Dynamic Skills List
+function renderDynamicSkillsForm() {
+    if (!skillsContainer) return;
+    skillsContainer.innerHTML = '';
+    const skillsList = normalizeSkillsStructure(appState.data.skills);
+    appState.data.skills = skillsList;
+
+    skillsList.forEach((s, idx) => {
+        const card = document.createElement('div');
+        card.className = 'dynamic-skill-card';
+        card.innerHTML = `
+            <div class="dynamic-skill-top">
+                <input type="text" class="form-input" style="font-weight:700; width: 70%;" value="${escapeHtml(s.label)}" placeholder="Category Name (e.g. Salesforce Platform)" oninput="updateSkillCategoryLabel(${idx}, this.value)">
+                <button type="button" class="btn-micro-danger" onclick="deleteSkillCategory(${idx})">
+                    <i data-lucide="trash-2"></i> Delete
+                </button>
+            </div>
+            <textarea class="form-textarea" rows="2" placeholder="Skills (e.g. Apex, LWC, Aura, Visualforce...)" oninput="updateSkillCategoryValue(${idx}, this.value)">${escapeHtml(s.value)}</textarea>
+        `;
+        skillsContainer.appendChild(card);
+    });
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+window.updateSkillCategoryLabel = (idx, label) => {
+    if (appState.data.skills && appState.data.skills[idx]) {
+        appState.data.skills[idx].label = label;
+        renderLiveResumePreview();
+    }
+};
+
+window.updateSkillCategoryValue = (idx, val) => {
+    if (appState.data.skills && appState.data.skills[idx]) {
+        appState.data.skills[idx].value = val;
+        renderLiveResumePreview();
+    }
+};
+
+window.deleteSkillCategory = (idx) => {
+    if (appState.data.skills && appState.data.skills[idx]) {
+        appState.data.skills.splice(idx, 1);
+        renderDynamicSkillsForm();
+        renderLiveResumePreview();
+    }
+};
+
+window.addEmptySkillCategory = () => {
+    if (!Array.isArray(appState.data.skills)) {
+        appState.data.skills = normalizeSkillsStructure(appState.data.skills);
+    }
+    appState.data.skills.push({
+        label: 'New Skill Category',
+        value: ''
+    });
+    renderDynamicSkillsForm();
+    renderLiveResumePreview();
+};
 
 // Render Form Experience List
 function renderDynamicExperienceForm() {
@@ -1467,23 +1538,17 @@ function renderLiveResumePreview() {
     const secSkills = document.getElementById('secSkills');
     if (previewSkillsTable) {
         previewSkillsTable.innerHTML = '';
-        const rows = [
-            { label: '• Cloud & DevOps', val: d.skills.cloud },
-            { label: '• Languages & Stack', val: d.skills.languages },
-            { label: '• Frontend & Portals', val: d.skills.frontend },
-            { label: '• Databases & Storage', val: d.skills.databases },
-            { label: '• Tools & Automation', val: d.skills.tools }
-        ];
+        const skillsList = normalizeSkillsStructure(d.skills);
         let hasSkills = false;
-        rows.forEach(r => {
-            if (r.val && r.val.trim()) {
+        skillsList.forEach(r => {
+            if (r.value && r.value.trim()) {
                 hasSkills = true;
                 const rowEl = document.createElement('div');
                 rowEl.className = 'res-skill-row';
                 rowEl.innerHTML = `
-                    <span class="res-skill-label">${escapeHtml(r.label)}</span>
+                    <span class="res-skill-label">• ${escapeHtml(r.label)}</span>
                     <span class="res-skill-sep">:</span>
-                    <span class="res-skill-val">${escapeHtml(r.val)}</span>
+                    <span class="res-skill-val">${escapeHtml(r.value)}</span>
                 `;
                 previewSkillsTable.appendChild(rowEl);
             }
@@ -1719,28 +1784,23 @@ async function exportToDocx() {
         }
 
         // 3. Core Competencies & Skills Table
-        docChildren.push(addSectionHeading("CORE COMPETENCIES & TECH SKILLS"));
-        const skillRows = [
-            { label: "• Cloud & DevOps", val: d.skills.cloud },
-            { label: "• Languages & Stack", val: d.skills.languages },
-            { label: "• Frontend & Portals", val: d.skills.frontend },
-            { label: "• Databases & Storage", val: d.skills.databases },
-            { label: "• Tools & Automation", val: d.skills.tools }
-        ];
-
-        skillRows.forEach(sr => {
-            if (sr.val && sr.val.trim()) {
-                docChildren.push(
-                    new Paragraph({
-                        spacing: { after: 60 },
-                        children: [
-                            new TextRun({ text: sr.label + " : ", bold: true, size: 19, font: "Arial", color: "0F172A" }),
-                            new TextRun({ text: sr.val, size: 19, font: "Arial", color: "1E293B" })
-                        ]
-                    })
-                );
-            }
-        });
+        const skillsList = normalizeSkillsStructure(d.skills);
+        if (skillsList.length > 0) {
+            docChildren.push(addSectionHeading("CORE COMPETENCIES & TECH SKILLS"));
+            skillsList.forEach(sr => {
+                if (sr.value && sr.value.trim()) {
+                    docChildren.push(
+                        new Paragraph({
+                            spacing: { after: 60 },
+                            children: [
+                                new TextRun({ text: `• ${sr.label} : `, bold: true, size: 19, font: "Arial", color: "0F172A" }),
+                                new TextRun({ text: sr.value, size: 19, font: "Arial", color: "1E293B" })
+                            ]
+                        })
+                    );
+                }
+            });
+        }
 
         // 4. Certifications (Separate Section)
         const validCerts = (d.certifications || [])

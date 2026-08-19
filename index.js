@@ -53,7 +53,15 @@ CRITICAL RULES:
 3. TITLE: Professional designation (e.g. "Software Developer", "Senior QA Automation Engineer", "Senior Liferay DXP Full Stack Developer").
 4. SUMMARY: Exactly 3 to 4 crisp sentences summarizing overall career background, core tech stack, and primary strengths.
    STRICT RULE: NEVER include project highlights, client names, tool dumps, or bullet points in the summary.
-5. SKILLS: Categorize into: cloud, languages, frontend, databases, tools.
+5. SKILLS: Extract the candidate's authentic skill categories and technologies directly from their resume (e.g. "Salesforce Platform", "Clouds & Modules", "Integration", "DevOps & Tools", "Methodologies", or standard categories like "Cloud & DevOps", "Languages & Stack", "Frontend & UI", "Databases & Storage", "Tools & Automation").
+   Format skills as an array of objects:
+   "skills": [
+     { "label": "Salesforce Platform", "value": "Apex, Lightning Web Components (LWC), Aura, Visualforce, SOQL, SOSL, Triggers, Batch/Queueable Apex, Platform Events, Flow" },
+     { "label": "Clouds & Modules", "value": "Sales Cloud, Service Cloud, Experience Cloud (Community Cloud), Salesforce CPQ, B2C Commerce Cloud" },
+     { "label": "Integration", "value": "REST API, JSON, OAuth, Named Credentials, Workato, Shopify, Zuora, Jira, NetSuite, Datadog" },
+     { "label": "DevOps & Tools", "value": "Salesforce CLI, VS Code, Git, GitHub, GearSet, BlueCanvas, Change Sets, CI/CD" },
+     { "label": "Methodologies", "value": "Agile, Scrum, SDLC, Technical Design, Code Review, Client Consulting, Mentoring" }
+   ]
 6. CERTIFICATIONS: Array of verified credentials only (e.g. ["Datadog: Site Reliability Engineering", "New Relic: Observability Foundations", "Google Cloud: Associate Cloud Engineer", "Apache JMeter Performance Engineer"]).
    STRICT RULE: NEVER mix education table headers like "Degree / Exam", "Year", "Institution", "Result" into certifications.
 7. EDUCATION: Array of degrees with university/school/year/grades (e.g. ["B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA", "Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%", "Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"]).
@@ -68,13 +76,13 @@ Return ONLY a valid JSON object matching this exact schema:
   "title": "Professional Title",
   "experience": "Experience: (X+ Years) OR Experience: (Fresher / Intern)",
   "summary": "Crisp 3-4 line professional summary...",
-  "skills": {
-    "cloud": "AWS, Docker, CI/CD",
-    "languages": "Python, Java, C++, SQL",
-    "frontend": "React, HTML5, CSS3, JavaScript",
-    "databases": "MySQL, PostgreSQL, MongoDB",
-    "tools": "Git, VS Code, Jira, Agile"
-  },
+  "skills": [
+    { "label": "Salesforce Platform", "value": "Apex, LWC, Aura, Visualforce, SOQL" },
+    { "label": "Clouds & Modules", "value": "Sales Cloud, Service Cloud, CPQ" },
+    { "label": "Integration", "value": "REST API, JSON, OAuth, Workato" },
+    { "label": "DevOps & Tools", "value": "Salesforce CLI, VS Code, Git, CI/CD" },
+    { "label": "Methodologies", "value": "Agile, Scrum, SDLC, Technical Design" }
+  ],
   "certifications": ["Cert 1"],
   "education": ["Degree 1"],
   "companies": [
@@ -169,6 +177,41 @@ function cleanSummaryString(summary, title, experience) {
 
     if (!/[.!?]$/.test(s)) s += '.';
     return s;
+}
+
+function normalizeSkillsStructure(skillsInput) {
+    if (!skillsInput) return [];
+    if (Array.isArray(skillsInput)) {
+        return skillsInput.map(item => {
+            if (typeof item === 'object' && item !== null) {
+                const label = item.label || item.category || item.name || 'Core Skills';
+                const val = item.value || item.val || item.skills || '';
+                return { label: String(label).trim(), value: String(val).trim() };
+            }
+            return { label: 'Key Skills', value: String(item).trim() };
+        }).filter(s => s.value.length > 0);
+    }
+    if (typeof skillsInput === 'object') {
+        const list = [];
+        const labelMap = {
+            cloud: 'Cloud & DevOps',
+            languages: 'Languages & Stack',
+            frontend: 'Frontend & Portals',
+            databases: 'Databases & Storage',
+            tools: 'Tools & Automation'
+        };
+        for (const [k, v] of Object.entries(skillsInput)) {
+            if (v && String(v).trim()) {
+                const label = labelMap[k] || k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+                list.push({ label: label.charAt(0).toUpperCase() + label.slice(1), value: String(v).trim() });
+            }
+        }
+        return list;
+    }
+    if (typeof skillsInput === 'string' && skillsInput.trim()) {
+        return [{ label: 'Core Technical Skills', value: skillsInput.trim() }];
+    }
+    return [];
 }
 
 function normalizeCompaniesWithForcecraver(companies, title) {
@@ -523,6 +566,7 @@ async function requestHandler(req, res) {
             const jsonResult = JSON.parse(cleanJsonStr);
             jsonResult.experience = normalizeExperienceString(jsonResult.experience, jsonResult.title, jsonResult.summary, jsonResult.companies);
             jsonResult.summary = cleanSummaryString(jsonResult.summary, jsonResult.title, jsonResult.experience);
+            jsonResult.skills = normalizeSkillsStructure(jsonResult.skills);
             jsonResult.companies = normalizeCompaniesWithForcecraver(jsonResult.companies, jsonResult.title);
 
             res.writeHead(200, { 'Content-Type': 'application/json' });

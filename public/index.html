@@ -249,34 +249,22 @@
                         </div>
 
                         <!-- Accordion 3: Core Competencies & Skills -->
-                        <div class="form-card">
+                        <div class="form-card" id="skillsCard">
                             <div class="form-card-header" onclick="toggleAccordion('skillsCard')">
                                 <div class="header-title">
                                     <i data-lucide="cpu"></i>
                                     <h4>Core Competencies & Tech Skills</h4>
                                 </div>
-                                <i data-lucide="chevron-down" class="accordion-icon" id="skillsCardIcon"></i>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <button type="button" class="btn-micro" id="addSkillCategoryBtn" onclick="event.stopPropagation(); addEmptySkillCategory();">
+                                        <i data-lucide="plus"></i> Add Category
+                                    </button>
+                                    <i data-lucide="chevron-down" class="accordion-icon" id="skillsCardIcon"></i>
+                                </div>
                             </div>
                             <div class="form-card-body" id="skillsCardBody">
-                                <div class="form-group">
-                                    <label>Cloud & DevOps</label>
-                                    <input type="text" id="inputSkillCloud" class="form-input" placeholder="AWS (EC2, S3, RDS, Lambda), Azure, Docker, Kubernetes, CI/CD">
-                                </div>
-                                <div class="form-group">
-                                    <label>Languages & Frameworks</label>
-                                    <input type="text" id="inputSkillLanguages" class="form-input" placeholder="Java 8/11/17, Spring Boot, Microservices, Hibernate, REST APIs, Python">
-                                </div>
-                                <div class="form-group">
-                                    <label>Frontend & Web Portals</label>
-                                    <input type="text" id="inputSkillFrontend" class="form-input" placeholder="Liferay DXP, React.js, JavaScript, HTML5, CSS3, jQuery, AJAX">
-                                </div>
-                                <div class="form-group">
-                                    <label>Databases & Storage</label>
-                                    <input type="text" id="inputSkillDatabases" class="form-input" placeholder="PostgreSQL, Oracle, MySQL, MongoDB, Redis Caching">
-                                </div>
-                                <div class="form-group">
-                                    <label>Tools & Methodologies</label>
-                                    <input type="text" id="inputSkillTools" class="form-input" placeholder="Git, Jira, Maven, Gradle, Postman, Jenkins, Agile, Scrum">
+                                <div id="skillsContainer" class="dynamic-skills-container">
+                                    <!-- Dynamic Category Rows (Label + Value) Injected Here -->
                                 </div>
                             </div>
                         </div>
