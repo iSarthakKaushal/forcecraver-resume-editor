@@ -1123,7 +1123,6 @@ function sanitizeAndEnrichStructuredData(data) {
                 responsibilities: pBullets
             };
         });
-    }
 }
 
 function cleanProjectDescription(rawDesc, projectName, role, env) {
