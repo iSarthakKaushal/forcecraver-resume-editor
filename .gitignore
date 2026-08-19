@@ -14,8 +14,8 @@ npm-debug.log*
 test_*.js
 benchmark_*.js
 check_ollama.js
-*.json
-!package.json
+ollama_direct_result.json
+server_response_*.json
 
 # Operating System Files
 .DS_Store
