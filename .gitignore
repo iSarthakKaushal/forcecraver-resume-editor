@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment Secrets
+.env
+.env.local
+
+# Logs and system artifacts
+*.log
+npm-debug.log*
+
+# Test and benchmark scripts
+test_*.js
+benchmark_*.js
+check_ollama.js
+*.json
+!package.json
+
+# Operating System Files
+.DS_Store
+Thumbs.db
