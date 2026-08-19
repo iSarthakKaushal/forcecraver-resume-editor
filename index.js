@@ -97,25 +97,26 @@ Return ONLY a valid JSON object matching this exact schema:
 }`;
 
 function normalizeExperienceString(exp, role, summary, companies) {
-    let s = String(exp || '').trim();
-    const isInternOrFresher = /fresher|intern|trainee|student/i.test(s) ||
-                             /intern|trainee|student/i.test(role || '') ||
-                             /internship|seeking\s+(?:a\s+)?(?:full-time|entry|fresher)/i.test(summary || '');
-
-    if (isInternOrFresher) return 'Experience: (Fresher / Intern)';
-
-    if (Array.isArray(companies) && companies.length === 1) {
-        const c = companies[0];
-        if (/intern|trainee/i.test(c.role || '') || /months?|weeks?/i.test(c.duration || '')) {
-            return 'Experience: (Fresher / Intern)';
+    const combined = `${exp || ''} ${summary || ''}`;
+    
+    // 1. Look for explicit years pattern first: "7+ years", "7 + years", "7 years", "9+ Years"
+    const yearMatch = combined.match(/(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)/i) || String(exp || '').match(/(\d+(?:\.\d+)?)/);
+    if (yearMatch) {
+        const num = Math.floor(parseFloat(yearMatch[1]));
+        if (num >= 1) {
+            return `Experience: (${num}+ Years)`;
         }
     }
 
-    const m = s.match(/(\d+(?:\.\d+)?)/);
-    if (m) {
-        const num = Math.floor(parseFloat(m[1]));
-        if (num === 0) return 'Experience: (Fresher / Intern)';
-        return `Experience: (${num}+ Years)`;
+    // 2. Check if genuinely an intern/fresher
+    const isIntern = /fresher|intern|trainee|seeking\s+(?:a\s+)?(?:entry|fresher)/i.test(`${role || ''} ${summary || ''}`);
+    if (isIntern) {
+        return 'Experience: (Fresher / Intern)';
+    }
+
+    // 3. Fallback check on companies
+    if (Array.isArray(companies) && companies.length >= 2) {
+        return 'Experience: (3+ Years)';
     }
 
     return 'Experience: (Fresher / Intern)';
@@ -130,6 +131,7 @@ function cleanSummaryString(summary, title, experience) {
     }
 
     let s = summary.trim();
+    s = s.replace(/^(?:CORE\s*PROFICIENCIES|PROFESSIONAL\s*SUMMARY|EXECUTIVE\s*SUMMARY|CORE\s*COMPETENCIES|PROFILE\s*SUMMARY)\s*[:.-]?\s*/i, '');
     s = s.replace(/(?:Project\s*Highlight|Project\s*Description|Key\s*Contributions|Key\s*Responsibilities|Client\s*:|Environment\s*:|Tools\/Tech\s*:)[\s\S]*/i, '');
     s = s.replace(/^[•\-\*\d\.\(\)\s,;:|]+/, '');
     s = s.replace(/^[a-z0-9]+\s*\.\s*/i, '');
@@ -137,7 +139,7 @@ function cleanSummaryString(summary, title, experience) {
     s = s.replace(/(?:\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '');
     s = s.replace(/\s+/g, ' ').trim();
 
-    if (s.length < 50) {
+    if (/\b(?:with|of|in|and|for)\s*\.?$/i.test(s) || s.length < 50) {
         const role = title || 'Software Developer';
         const exp = experience ? experience.replace(/Experience:\s*/i, '').replace(/[()]/g, '').trim() : '';
         const expClause = exp ? `with ${exp} of` : 'with';

@@ -541,16 +541,17 @@ async function parseRawResumeTextWithNLP(fullBlock) {
         }
     }
 
-    // 2. Extract Experience Years
-    let expBadge = "Experience: (5+ Years)";
-    const expMatch = fullBlock.match(/(\d+(?:\.\d+)?\+?)\s*(?:years?|yrs?)(?:\s*(\d+)\s*(?:months?|mos?))?\s+(?:of\s+)?(?:it\s+|total\s+|work\s+|professional\s+)?experience/i) ||
-                     fullBlock.match(/(?:total\s+experience|work\s+experience|professional\s+experience)\s*[:.-]?\s*\(?\s*(\d+(?:\.\d+)?\+?)\s*(?:years?|yrs?)(?:\s*(\d+)\s*(?:months?|mos?))?\s*\)?/i);
+    // 2. Extract Experience Years (Check for explicit years: e.g. 7+ years, 7 + years, 9 years)
+    let expBadge = "Experience: (Fresher / Intern)";
+    const expMatch = fullBlock.match(/(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)/i);
     if (expMatch) {
-        expBadge = normalizeExperienceString(expMatch[1]);
+        const num = Math.floor(parseFloat(expMatch[1]));
+        if (num >= 1) {
+            expBadge = `Experience: (${num}+ Years)`;
+        }
     } else {
-        const hasIntern = /intern|student|bca|mca|fresher|trainee/i.test(fullBlock);
-        if (hasIntern) expBadge = "Experience: (Fresher / Intern)";
-        else expBadge = "Experience: (1+ Years)";
+        const isFresher = /fresher|intern|trainee|seeking\s+entry/i.test(fullBlock);
+        if (!isFresher) expBadge = "Experience: (1+ Years)";
     }
 
     // 3. Extract Professional Title
@@ -745,30 +746,26 @@ async function humanizeProjectsInMemory(data) {
 }
 
 function normalizeExperienceString(exp, role, summary, companies) {
-    let s = String(exp || '').trim();
+    const combined = `${exp || ''} ${summary || ''}`;
     
-    // Check if candidate is intern / fresher / student / trainee
-    const isInternOrFresher = /fresher|intern|trainee|student/i.test(s) ||
-                             /intern|trainee|student/i.test(role || '') ||
-                             /internship|seeking\s+(?:a\s+)?(?:full-time|entry|fresher)/i.test(summary || '');
-
-    if (isInternOrFresher) {
-        return 'Experience: (Fresher / Intern)';
-    }
-
-    // Check company durations: if only 1 company with <= 6 months or intern
-    if (Array.isArray(companies) && companies.length === 1) {
-        const c = companies[0];
-        if (/intern|trainee/i.test(c.role || '') || /months?|weeks?/i.test(c.duration || '')) {
-            return 'Experience: (Fresher / Intern)';
+    // 1. Look for explicit years pattern first: "7+ years", "7 + years", "7 years", "9+ Years"
+    const yearMatch = combined.match(/(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)/i) || String(exp || '').match(/(\d+(?:\.\d+)?)/);
+    if (yearMatch) {
+        const num = Math.floor(parseFloat(yearMatch[1]));
+        if (num >= 1) {
+            return `Experience: (${num}+ Years)`;
         }
     }
 
-    const m = s.match(/(\d+(?:\.\d+)?)/);
-    if (m) {
-        const num = Math.floor(parseFloat(m[1]));
-        if (num === 0) return 'Experience: (Fresher / Intern)';
-        return `Experience: (${num}+ Years)`;
+    // 2. Check if genuinely an intern/fresher
+    const isIntern = /fresher|intern|trainee|seeking\s+(?:a\s+)?(?:entry|fresher)/i.test(`${role || ''} ${summary || ''}`);
+    if (isIntern) {
+        return 'Experience: (Fresher / Intern)';
+    }
+
+    // 3. Fallback check on companies
+    if (Array.isArray(companies) && companies.length >= 2) {
+        return 'Experience: (3+ Years)';
     }
 
     return 'Experience: (Fresher / Intern)';
@@ -781,22 +778,26 @@ function normalizeProfessionalSummary(summary, title, experience, skills) {
 
     let s = summary.trim();
 
-    // 1. Remove project highlights, client descriptions, key contributions dumped into summary
+    // 1. Remove heading prefixes
+    s = s.replace(/^(?:CORE\s*PROFICIENCIES|PROFESSIONAL\s*SUMMARY|EXECUTIVE\s*SUMMARY|CORE\s*COMPETENCIES|PROFILE\s*SUMMARY)\s*[:.-]?\s*/i, '');
+
+    // 2. Remove project highlights, client descriptions, key contributions dumped into summary
     s = s.replace(/(?:Project\s*Highlight|Project\s*Description|Key\s*Contributions|Key\s*Responsibilities|Client\s*:|Environment\s*:|Tools\/Tech\s*:)[\s\S]*/i, '');
     
-    // 2. Remove leading bullet symbols, broken words, or orphan punctuation
+    // 3. Remove leading bullet symbols, broken words, or orphan punctuation
     s = s.replace(/^[•\-\*\d\.\(\)\s,;:|]+/, '');
-    s = s.replace(/^[a-z0-9]+\s*\.\s*/i, ''); // removes broken start like "reports . "
+    s = s.replace(/^[a-z0-9]+\s*\.\s*/i, '');
 
-    // 3. Remove email, phone, addresses
+    // 4. Remove email, phone, addresses
     s = s.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
          .replace(/(?:\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '')
          .replace(/ph:\s*\d+/gi, '');
 
-    // 4. Normalize spaces
+    // 5. Normalize spaces
     s = s.replace(/\s+/g, ' ').trim();
 
-    if (s.length < 50) {
+    // 6. Fix trailing broken sentences like "with 7 + years of."
+    if (/\b(?:with|of|in|and|for)\s*\.?$/i.test(s) || s.length < 50) {
         return generateDefaultSummary(title, experience, skills);
     }
 
