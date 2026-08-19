@@ -490,15 +490,19 @@ function getLocalIpAddresses() {
     return addresses;
 }
 
-server.listen(PORT, '0.0.0.0', () => {
-    const ips = getLocalIpAddresses();
-    console.log(`==================================================================`);
-    console.log(`  FORCECRAVER RESUME STUDIO & AI SERVER RUNNING`);
-    console.log(`  Port:              ${PORT}`);
-    console.log(`  AI Engine:         ${GROQ_API_KEY ? `Groq Cloud (${GROQ_MODEL}) [Ultra-Fast]` : `Local/Remote Ollama (${OLLAMA_HOST})`}`);
-    console.log(`  Local URL:         http://localhost:${PORT}`);
-    ips.forEach(ip => {
-        console.log(`  Network (LAN) URL: http://${ip}:${PORT}`);
+if (require.main === module) {
+    server.listen(PORT, '0.0.0.0', () => {
+        const ips = getLocalIpAddresses();
+        console.log(`==================================================================`);
+        console.log(`  FORCECRAVER RESUME STUDIO & AI SERVER RUNNING`);
+        console.log(`  Port:              ${PORT}`);
+        console.log(`  AI Engine:         ${GROQ_API_KEY ? `Groq Cloud (${GROQ_MODEL}) [Ultra-Fast]` : `Local/Remote Ollama (${OLLAMA_HOST})`}`);
+        console.log(`  Local URL:         http://localhost:${PORT}`);
+        ips.forEach(ip => {
+            console.log(`  Network (LAN) URL: http://${ip}:${PORT}`);
+        });
+        console.log(`==================================================================`);
     });
-    console.log(`==================================================================`);
-});
+}
+
+module.exports = server;
