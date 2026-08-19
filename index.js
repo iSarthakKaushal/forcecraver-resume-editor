@@ -281,20 +281,36 @@ function executeGroqRequest(cleanedText, modelName) {
 }
 
 async function processWithGroq(cleanedText) {
-    const candidateModels = [GROQ_MODEL, 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama-3.1-70b-versatile', 'mixtral-8x7b-32768'];
-    const uniqueModels = Array.from(new Set(candidateModels));
-    let lastError = null;
+    const apiKey = (process.env.GROQ_API_KEY || GROQ_API_KEY || '').trim();
+    if (!apiKey) {
+        throw new Error('GROQ_API_KEY is not configured in environment variables');
+    }
+
+    const candidateModels = [
+        (process.env.GROQ_MODEL || GROQ_MODEL || 'llama-3.3-70b-versatile').trim(),
+        'llama-3.3-70b-versatile',
+        'llama-3.1-8b-instant',
+        'llama3-70b-8192',
+        'llama3-8b-8192',
+        'gemma2-9b-it'
+    ];
+    const uniqueModels = Array.from(new Set(candidateModels.filter(Boolean)));
+    const errors = [];
 
     for (const model of uniqueModels) {
         try {
-            console.log(`[AI-Groq] Requesting model ${model}...`);
-            return await executeGroqRequest(cleanedText, model);
+            console.log(`[AI-Groq] Attempting extraction with model: ${model}...`);
+            const res = await executeGroqRequest(cleanedText, model);
+            if (res && res.length > 20) {
+                console.log(`[AI-Groq] Successfully parsed resume with model: ${model}`);
+                return res;
+            }
         } catch (err) {
-            lastError = err;
-            console.warn(`[AI-Groq] Model ${model} failed (${err.message}), trying fallback model...`);
+            errors.push(`[${model}] ${err.message}`);
+            console.warn(`[AI-Groq] Model ${model} failed: ${err.message}`);
         }
     }
-    throw lastError || new Error('All Groq models failed');
+    throw new Error(`Groq AI Extraction failed on all models: ${errors.join(' --- ')}`);
 }
 
 function processWithOllama(cleanedText, model = 'qwen2.5:latest') {
