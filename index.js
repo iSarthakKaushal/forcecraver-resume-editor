@@ -28,7 +28,7 @@ loadEnvFile();
 
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
 const MIME_TYPES = {
@@ -287,12 +287,12 @@ async function processWithGroq(cleanedText) {
     }
 
     const candidateModels = [
-        (process.env.GROQ_MODEL || GROQ_MODEL || 'llama-3.3-70b-versatile').trim(),
-        'llama-3.3-70b-versatile',
-        'llama-3.1-8b-instant',
-        'llama3-70b-8192',
-        'llama3-8b-8192',
-        'gemma2-9b-it'
+        (process.env.GROQ_MODEL || GROQ_MODEL || 'openai/gpt-oss-120b').trim(),
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
+        'qwen/qwen3.6-27b',
+        'groq/compound',
+        'groq/compound-mini'
     ];
     const uniqueModels = Array.from(new Set(candidateModels.filter(Boolean)));
     const errors = [];
