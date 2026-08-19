@@ -317,7 +317,7 @@ function processWithOllama(cleanedText, model = 'qwen2.5:latest') {
     });
 }
 
-const server = http.createServer(async (req, res) => {
+async function requestListener(req, res) {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -475,7 +475,9 @@ const server = http.createServer(async (req, res) => {
             res.end(content, 'utf-8');
         }
     });
-});
+}
+
+const server = http.createServer(requestListener);
 
 function getLocalIpAddresses() {
     const interfaces = os.networkInterfaces();
@@ -505,4 +507,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = server;
+module.exports = requestListener;
