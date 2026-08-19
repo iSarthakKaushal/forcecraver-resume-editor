@@ -471,7 +471,7 @@ function setLoaderProgress(percent, title, msg) {
     });
 }
 
-// High-Speed Parallel PDF Text Extractor Helper with Y-Coordinate Line Grouping
+// High-Speed Multi-Column Aware PDF Text Extractor Helper
 async function extractTextFromPdf(arrayBuffer) {
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0), disableWorker: true });
     const pdf = await loadingTask.promise;
@@ -479,33 +479,64 @@ async function extractTextFromPdf(arrayBuffer) {
     const pagePromises = Array.from({ length: pdf.numPages }, async (_, index) => {
         const pageNum = index + 1;
         const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.0 });
+        const pageWidth = viewport.width || 595;
         const textContent = await page.getTextContent();
         if (!textContent.items || textContent.items.length === 0) return '';
 
         const validItems = textContent.items.filter(it => it.str && it.str.trim() && it.transform);
-        validItems.sort((a, b) => b.transform[5] - a.transform[5]);
+        if (validItems.length === 0) return '';
 
-        const lines = [];
-        validItems.forEach(item => {
-            const y = item.transform[5];
-            const fontSize = Math.abs(item.transform[0]) || 10;
-            const threshold = Math.max(3.5, fontSize * 0.45);
+        // Helper to extract lines from a set of text items
+        const extractLinesFromItems = (items) => {
+            items.sort((a, b) => b.transform[5] - a.transform[5]);
+            const lines = [];
+            items.forEach(item => {
+                const y = item.transform[5];
+                const fontSize = Math.abs(item.transform[0]) || 10;
+                const threshold = Math.max(3.5, fontSize * 0.45);
 
-            let line = lines.find(l => Math.abs(l.y - y) <= threshold);
-            if (!line) {
-                line = { y, items: [] };
-                lines.push(line);
+                let line = lines.find(l => Math.abs(l.y - y) <= threshold);
+                if (!line) {
+                    line = { y, items: [] };
+                    lines.push(line);
+                }
+                line.items.push(item);
+            });
+
+            let columnText = '';
+            lines.forEach(line => {
+                line.items.sort((a, b) => a.transform[4] - b.transform[4]);
+                const lineStr = line.items.map(it => it.str).join(' ').trim();
+                if (lineStr) columnText += lineStr + '\n';
+            });
+            return columnText;
+        };
+
+        // Multi-column sidebar detection:
+        // Check if there is a 2-column or sidebar layout on this page
+        let bestSplitX = -1;
+        for (let ratio of [0.30, 0.35, 0.40, 0.50]) {
+            const split = pageWidth * ratio;
+            const left = validItems.filter(it => it.transform[4] < split);
+            const right = validItems.filter(it => it.transform[4] >= split);
+
+            if (left.length >= 8 && right.length >= 12) {
+                bestSplitX = split;
+                break;
             }
-            line.items.push(item);
-        });
+        }
 
-        let pageText = '';
-        lines.forEach(line => {
-            line.items.sort((a, b) => a.transform[4] - b.transform[4]);
-            const lineStr = line.items.map(it => it.str).join(' ').trim();
-            if (lineStr) pageText += lineStr + '\n';
-        });
-        return pageText;
+        if (bestSplitX > 0) {
+            const leftItems = validItems.filter(it => it.transform[4] < bestSplitX);
+            const rightItems = validItems.filter(it => it.transform[4] >= bestSplitX);
+
+            const leftText = extractLinesFromItems(leftItems);
+            const rightText = extractLinesFromItems(rightItems);
+            return leftText + '\n\n' + rightText;
+        } else {
+            return extractLinesFromItems(validItems);
+        }
     });
 
     const pageTexts = await Promise.all(pagePromises);
