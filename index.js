@@ -28,7 +28,7 @@ loadEnvFile();
 
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
 const MIME_TYPES = {
@@ -208,10 +208,10 @@ function normalizeCompaniesWithForcecraver(companies, title) {
     return result;
 }
 
-function processWithGroq(cleanedText) {
+function executeGroqRequest(cleanedText, modelName) {
     return new Promise((resolve, reject) => {
         const payload = JSON.stringify({
-            model: GROQ_MODEL,
+            model: modelName,
             messages: [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'user', content: `Extract candidate resume details into JSON:\n\n${cleanedText}` }
@@ -255,6 +255,23 @@ function processWithGroq(cleanedText) {
         req.write(payload);
         req.end();
     });
+}
+
+async function processWithGroq(cleanedText) {
+    const candidateModels = [GROQ_MODEL, 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama-3.1-70b-versatile', 'mixtral-8x7b-32768'];
+    const uniqueModels = Array.from(new Set(candidateModels));
+    let lastError = null;
+
+    for (const model of uniqueModels) {
+        try {
+            console.log(`[AI-Groq] Requesting model ${model}...`);
+            return await executeGroqRequest(cleanedText, model);
+        } catch (err) {
+            lastError = err;
+            console.warn(`[AI-Groq] Model ${model} failed (${err.message}), trying fallback model...`);
+        }
+    }
+    throw lastError || new Error('All Groq models failed');
 }
 
 function processWithOllama(cleanedText, model = 'qwen2.5:latest') {

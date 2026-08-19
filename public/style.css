@@ -951,7 +951,7 @@ html, body {
     font-size: 9.5pt;
     line-height: 1.45;
     text-align: left;
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* Background Watermark Styling (Repeats on EVERY A4 Page) */
@@ -1321,15 +1321,29 @@ html, body {
     pointer-events: auto;
 }
 
-/* Print Optimization (Watermark on EVERY A4 page center) */
+/* Print Optimization (Watermark on EVERY A4 page center & Multi-page support) */
 @media print {
     @page {
         size: A4 portrait;
         margin: 12mm 15mm;
     }
 
-    body {
-        background: transparent !important;
+    *, *:before, *:after {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    html, body {
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
@@ -1339,31 +1353,39 @@ html, body {
     .editor-pane,
     .modal-overlay,
     .toast,
-    .glow-bg {
+    .glow-bg,
+    .header-actions {
         display: none !important;
     }
 
-    .main-content, .workspace-section, .workspace-grid, .preview-pane {
+    .main-content, 
+    .workspace-section, 
+    .workspace-grid, 
+    .preview-pane,
+    .preview-stage {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
         padding: 0 !important;
         margin: 0 !important;
         background: transparent !important;
-        height: auto !important;
-        overflow: visible !important;
-        display: block !important;
-    }
-
-    .preview-stage {
         transform: none !important;
     }
 
     .resume-sheet {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
         box-shadow: none !important;
         margin: 0 !important;
         padding: 0 !important;
-        width: 100% !important;
-        min-height: auto !important;
-        position: relative !important;
-        overflow: visible !important;
+        border: none !important;
         background: transparent !important;
     }
 
@@ -1403,7 +1425,7 @@ html, body {
         break-inside: auto !important;
     }
 
-    .res-proj-card, .res-exp-item {
+    .res-proj-card, .res-exp-item, .dynamic-item-card {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }
