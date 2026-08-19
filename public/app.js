@@ -802,7 +802,9 @@ async function humanizeProjectsInMemory(data) {
     if (!data.projects || data.projects.length === 0) return;
 
     for (let p of data.projects) {
-        p.responsibilities = generateHumanizedProjectBullets(p.name, p.environment, p.role);
+        if (!p.responsibilities || p.responsibilities.length === 0) {
+            p.responsibilities = generateHumanizedProjectBullets(p.name, p.environment, p.role);
+        }
     }
 }
 
@@ -1090,10 +1092,9 @@ function sanitizeAndEnrichStructuredData(data) {
                 pBullets = p.responsibilities.split('\n').map(b => b.trim()).filter(Boolean);
             }
 
-            // Always expand to 6-7 bullets
-            if (pBullets.length < 6) {
-                const expanded = generateHumanizedProjectBullets(pName, pEnv, pRole);
-                pBullets = Array.from(new Set([...pBullets, ...expanded])).slice(0, 7);
+            // If candidate provided 0 bullets, generate relevant bullets
+            if (pBullets.length === 0) {
+                pBullets = generateHumanizedProjectBullets(pName, pEnv, pRole);
             }
 
             return {

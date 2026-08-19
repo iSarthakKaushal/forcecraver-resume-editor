@@ -70,8 +70,10 @@ CRITICAL RULES:
    - Replace ONLY the present/first employer's company name with "Forcecraver Technologies Pvt. Ltd." while preserving candidate's authentic job title/role, exact duration, and exact bullet points from the resume.
    - For ALL PAST / PREVIOUS companies (e.g. PwC, TCS, Infosys, etc.), retain their REAL authentic company names, authentic roles, authentic dates, and extract 2-4 key responsibility bullet points directly from the resume!
    - STRICT RULE: NEVER omit past companies. Every employer in the candidate's work history must be included in the "companies" array!
-9. PROJECTS: Array of candidate's authentic projects from the PROJECTS section (e.g., "Scene Text Recognition & Assistive Vision System", "Face Recognition System", "Patient Crowdfunding Platform").
-   STRICT RULE: NEVER use company or client names as project titles.
+9. PROJECTS: Array of candidate's authentic projects from the PROJECTS section (name, role, duration, client, environment, description, responsibilities).
+   - If candidate's resume has NO separate Projects section, return an empty array "projects": []!
+   - Extract candidate's REAL project bullet points directly from the resume for "responsibilities".
+   - NEVER make up fake project names or copy projects from examples!
 10. STRICT NO-HALLUCINATION RULE: If the candidate's resume does NOT contain an Education section, Certifications section, or separate Projects section, set that field strictly to an empty array []. NEVER make up fake degrees, fake certifications, or fake projects!
 
 Return ONLY a valid JSON object matching this exact schema:
@@ -123,12 +125,16 @@ Return ONLY a valid JSON object matching this exact schema:
   ],
   "projects": [
     {
-      "name": "Scene Text Recognition & Assistive Vision System",
+      "name": "Enterprise Document Verification Platform",
       "role": "Developer",
-      "duration": "Jan 2026 – Mar 2026",
-      "client": "N/A",
-      "environment": "Python, OpenCV, EasyOCR, EAST",
-      "description": "Designed a modular scene-text recognition pipeline for real-time video-frame analysis."
+      "duration": "Jan 2024 – Mar 2025",
+      "client": "Financial Services Client",
+      "environment": "Python, OpenCV, AWS, FastAPI",
+      "description": "Designed automated document extraction and optical recognition workflows.",
+      "responsibilities": [
+        "Architected OCR processing pipeline handling over 10K daily verification documents.",
+        "Integrated AWS S3 and Lambda microservices to streamline verification latency by 35%."
+      ]
     }
   ]
 }`;
