@@ -6,7 +6,7 @@ const os = require('os');
 
 // Helper to auto-load .env file without external dependencies
 function loadEnvFile() {
-    const envPath = path.join(__dirname, '.env');
+    const envPath = path.join(__dirname, '..', '.env');
     if (fs.existsSync(envPath)) {
         const lines = fs.readFileSync(envPath, 'utf8').split('\n');
         for (const line of lines) {
@@ -458,10 +458,7 @@ async function requestListener(req, res) {
 
     // Static File Serving
     let relativePath = req.url === '/' ? 'index.html' : req.url.split('?')[0];
-    let filePath = path.join(__dirname, 'public', relativePath);
-    if (!fs.existsSync(filePath)) {
-        filePath = path.join(__dirname, relativePath);
-    }
+    let filePath = path.join(__dirname, '..', 'public', relativePath);
     const ext = path.extname(filePath);
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
