@@ -1803,10 +1803,24 @@ async function exportToDocx() {
 
         const blob = await docx.Packer.toBlob(doc);
         const fileName = `Forcecraver_${(d.name || 'Candidate').replace(/\s+/g, '_')}_Resume.docx`;
-        saveAs(blob, fileName);
+
+        if (typeof saveAs === 'function') {
+            saveAs(blob, fileName);
+        } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 300);
+        }
 
         if (typeof confetti === 'function') confetti({ particleCount: 80, spread: 70 });
-        showToast('DOCX Downloaded successfully in exact standard template!', 'success');
+        showToast('DOCX Word Document downloaded successfully!', 'success');
 
     } catch (err) {
         console.error('DOCX Export error:', err);

@@ -18,7 +18,8 @@
     <!-- Mammoth.js for DOCX parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <!-- docx library for generating native Microsoft Word documents -->
-    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+    <script>if (typeof docx === 'undefined') { document.write('<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"><\\/script>'); }</script>
     <!-- FileSaver for reliable browser downloads -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- html2pdf for high quality PDF export -->
