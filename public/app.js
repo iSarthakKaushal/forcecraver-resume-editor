@@ -780,6 +780,25 @@ async function humanizeProjectsInMemory(data) {
     }
 }
 
+function filterAndCleanEduCertText(text) {
+    if (!text || typeof text !== 'string') return '';
+    let s = text.trim();
+    
+    // Remove table headers like "Degree / Exam", "Year", "Institution", "Result", "Score", "Board / University"
+    s = s.replace(/\b(?:Degree\s*(?:\/|&)?\s*Exam(?:ination)?|Year\s*(?:\/|&)?\s*Passing|Institution|Result|CGPA\s*Score|Score|Board\s*(?:\/|&)?\s*University)\b/gi, ' ');
+    
+    // Clean orphan punctuation, slashes, bars, leading bullets
+    s = s.replace(/^[•\-\*\d\.\(\)\s,;:|/]+/, '');
+    s = s.replace(/[\s|/]+$/, '');
+    s = s.replace(/\s+/g, ' ').trim();
+    
+    // If it's just leftover junk headers, return empty
+    if (/^(?:degree|exam|year|institution|result|score|percentage|passing|board|university|\/|\||-|\.)+$/i.test(s) || s.length < 3) {
+        return '';
+    }
+    return s;
+}
+
 function normalizeExperienceString(exp, role, summary, companies) {
     const combined = `${exp || ''} ${summary || ''}`;
     
