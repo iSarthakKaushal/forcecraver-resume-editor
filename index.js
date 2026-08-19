@@ -72,6 +72,7 @@ CRITICAL RULES:
    - STRICT RULE: NEVER omit past companies. Every employer in the candidate's work history must be included in the "companies" array!
 9. PROJECTS: Array of candidate's authentic projects from the PROJECTS section (e.g., "Scene Text Recognition & Assistive Vision System", "Face Recognition System", "Patient Crowdfunding Platform").
    STRICT RULE: NEVER use company or client names as project titles.
+10. STRICT NO-HALLUCINATION RULE: If the candidate's resume does NOT contain an Education section, Certifications section, or separate Projects section, set that field strictly to an empty array []. NEVER make up fake degrees, fake certifications, or fake projects!
 
 Return ONLY a valid JSON object matching this exact schema:
 {

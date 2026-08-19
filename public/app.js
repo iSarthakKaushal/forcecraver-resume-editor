@@ -674,18 +674,6 @@ async function parseRawResumeTextWithNLP(fullBlock) {
         });
     }
 
-    if (certsList.length === 0) {
-        certsList.push(
-            "Datadog: Site Reliability Engineering",
-            "New Relic: Observability Foundations",
-            "Google Cloud: Associate Cloud Engineer",
-            "Apache JMeter Performance Engineer"
-        );
-    }
-    if (eduList.length === 0) {
-        eduList.push("Bachelor of Technology (B.Tech) in Information Technology – Anna University (2010)");
-    }
-
     // 7. Extract Companies (Dynamic Multi-Company Extractor across all candidate employers)
     const companies = [];
     const expSectionMatch = fullBlock.match(/(?:work\s+experience|professional\s+experience|employment\s+history|experience\s+details|experience)\s*[:.-]?\s*([\s\S]+?)(?=(?:projects?\s+detail|projects?|education|certifications?|academic|technical\s+skills)\b)/i);
@@ -808,10 +796,6 @@ async function parseRawResumeTextWithNLP(fullBlock) {
                 responsibilities: responsibilities
             });
         }
-    }
-
-    if (extractedProjects.length === 0) {
-        extractedProjects = getInitialResumeData().projects;
     }
 
     return {
@@ -991,7 +975,7 @@ function sanitizeAndEnrichStructuredData(data) {
         ];
     }
 
-    // Normalize Certifications (Strict Filtering)
+    // Normalize Certifications (Strict Filtering without fake defaults)
     if (!Array.isArray(data.certifications)) {
         data.certifications = typeof data.certifications === 'string' ? [data.certifications] : [];
     } else {
@@ -1002,16 +986,8 @@ function sanitizeAndEnrichStructuredData(data) {
             return filterAndCleanEduCertText(str);
         }).filter(Boolean);
     }
-    if (data.certifications.length === 0) {
-        data.certifications = [
-            "Datadog: Site Reliability Engineering",
-            "New Relic: Observability Foundations",
-            "Google Cloud: Associate Cloud Engineer",
-            "Apache JMeter Performance Engineer"
-        ];
-    }
 
-    // Normalize Education (Strict Filtering)
+    // Normalize Education (Strict Filtering without fake defaults)
     if (!Array.isArray(data.education)) {
         data.education = typeof data.education === 'string' ? [data.education] : [];
     } else {
@@ -1024,13 +1000,6 @@ function sanitizeAndEnrichStructuredData(data) {
             }
             return filterAndCleanEduCertText(str);
         }).filter(Boolean);
-    }
-    if (data.education.length === 0) {
-        data.education = [
-            "B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA",
-            "Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%",
-            "Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"
-        ];
     }
 
     // Normalize Companies (Accurately detect the PRESENT company and replace with Forcecraver)
@@ -1113,11 +1082,11 @@ function sanitizeAndEnrichStructuredData(data) {
         data.companies = formattedCompanies;
     }
 
-    // Normalize Projects
-    if (!Array.isArray(data.projects) || data.projects.length === 0) {
-        data.projects = getInitialResumeData().projects;
-    } else {
-        data.projects = data.projects.map((p, idx) => {
+    // Normalize Projects (Do NOT inject fake sample projects if candidate has none)
+    if (!Array.isArray(data.projects)) {
+        data.projects = [];
+    }
+    data.projects = data.projects.map((p, idx) => {
             let pName = (p.name || p.project || '').trim();
             // Strip leading prefixes like "PROJECT 1: ", "Project 2:", "1. "
             pName = pName.replace(/^project\s*(?:#?\d+|\d+|:)\s*[:.-]?\s*/i, '').replace(/^\d+[\.\)]\s*/, '').trim();
