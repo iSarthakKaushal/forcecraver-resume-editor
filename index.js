@@ -66,7 +66,10 @@ CRITICAL RULES:
    STRICT RULE: NEVER mix education table headers like "Degree / Exam", "Year", "Institution", "Result" into certifications.
 7. EDUCATION: Array of degrees with university/school/year/grades (e.g. ["B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA", "Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%", "Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"]).
    STRICT RULE: NEVER include table headers like "Degree / Exam", "Year", "Institution", "Result" as an education entry.
-8. COMPANIES: Array of all employers (company, role, duration, location). Always set first (present) company to "Forcecraver Technologies Pvt. Ltd.". Retain authentic role and authentic duration.
+8. COMPANIES: Extract EVERY SINGLE EMPLOYER / COMPANY from the candidate's Work Experience history in reverse chronological order (Present company first, followed by all previous companies like PwC, TCS, Wipro, etc.).
+   - Replace ONLY the present/first employer's company name with "Forcecraver Technologies Pvt. Ltd." while preserving candidate's authentic job title/role, exact duration, and exact bullet points from the resume.
+   - For ALL PAST / PREVIOUS companies (e.g. PwC, TCS, Infosys, etc.), retain their REAL authentic company names, authentic roles, authentic dates, and extract 2-4 key responsibility bullet points directly from the resume!
+   - STRICT RULE: NEVER omit past companies. Every employer in the candidate's work history must be included in the "companies" array!
 9. PROJECTS: Array of candidate's authentic projects from the PROJECTS section (e.g., "Scene Text Recognition & Assistive Vision System", "Face Recognition System", "Patient Crowdfunding Platform").
    STRICT RULE: NEVER use company or client names as project titles.
 
@@ -88,10 +91,33 @@ Return ONLY a valid JSON object matching this exact schema:
   "companies": [
     {
       "company": "Forcecraver Technologies Pvt. Ltd.",
-      "role": "Software Developer Intern",
-      "duration": "May 2025 – Jul 2025",
-      "location": "Noida, IN",
-      "responsibilities": ["Engineered real-time presentation tool.", "Optimized frame processing pipeline."]
+      "role": "Site Reliability & Observability Engineer",
+      "duration": "Sept 2021 – Present",
+      "location": "Bengaluru, IN",
+      "responsibilities": [
+        "Led reliability and observability for large-scale production distributed services using New Relic and Datadog, reducing incident detection time by 28%.",
+        "Defined and enforced SLIs/SLOs and error budgets for critical microservices, improving availability from 99.5% to 99.9%."
+      ]
+    },
+    {
+      "company": "PricewaterhouseCoopers (PwC)",
+      "role": "Consultant",
+      "duration": "Nov 2019 – Sept 2021",
+      "location": "Bengaluru, IN",
+      "responsibilities": [
+        "Led performance and chaos engineering for enterprise applications using LoadRunner and JMeter at 50K concurrent users.",
+        "Analyzed thread dumps, heap dumps, and GC logs to diagnose performance issues, boosting system stability by 35%."
+      ]
+    },
+    {
+      "company": "Tata Consultancy Services (TCS)",
+      "role": "System Engineer",
+      "duration": "Aug 2017 – Oct 2019",
+      "location": "Bengaluru, IN",
+      "responsibilities": [
+        "Developed and ran performance test scripts using JMeter/LoadRunner for 10K-20K concurrent users.",
+        "Monitored application performance using Splunk and AppDynamics, reducing MTTD by 28%."
+      ]
     }
   ],
   "projects": [

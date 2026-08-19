@@ -655,9 +655,61 @@ async function parseRawResumeTextWithNLP(fullBlock) {
         eduList.push("Bachelor of Technology (B.Tech) in Information Technology – Anna University (2010)");
     }
 
-    // 7. Extract Companies (Always set Present Company to Forcecraver Technologies)
-    const companies = [
-        {
+    // 7. Extract Companies (Dynamic Multi-Company Extractor across all candidate employers)
+    const companies = [];
+    const expSectionMatch = fullBlock.match(/(?:work\s+experience|professional\s+experience|employment\s+history|experience\s+details|experience)\s*[:.-]?\s*([\s\S]+?)(?=(?:projects?\s+detail|projects?|education|certifications?|academic|technical\s+skills)\b)/i);
+    const expText = expSectionMatch ? expSectionMatch[1] : fullBlock;
+
+    // Detect lines like "Role | Company Date – Date" or "Company | Role Date – Date"
+    const companyHeaderRegex = /(?:^|\n)\s*([A-Za-z0-9\s,&/().'-]+?)\s*[|–—•-]\s*([A-Za-z0-9\s,&/().'-]+?)(?:\s*[|–—•-]\s*|\s+)([A-Za-z]{3,9}\s*\d{4}|\d{4})\s*[-–—to]+\s*(Present|Current|Till\s*Date|Ongoing|[A-Za-z]{3,9}\s*\d{4}|\d{4})/gi;
+    
+    let match;
+    const matchedBlocks = [];
+    while ((match = companyHeaderRegex.exec(expText)) !== null) {
+        matchedBlocks.push({
+            index: match.index,
+            part1: match[1].trim(),
+            part2: match[2].trim(),
+            startDate: match[3].trim(),
+            endDate: match[4].trim(),
+            fullHeader: match[0]
+        });
+    }
+
+    if (matchedBlocks.length > 0) {
+        matchedBlocks.forEach((mb, idx) => {
+            const nextIdx = (idx + 1 < matchedBlocks.length) ? matchedBlocks[idx + 1].index : expText.length;
+            const blockContent = expText.substring(mb.index + mb.fullHeader.length, nextIdx).trim();
+            const bullets = blockContent.split('\n')
+                .map(l => l.replace(/^[•\-\*\d\.\(\)]+\s*/, '').trim())
+                .filter(l => l.length > 15 && l.length < 350 && !/^(?:education|certifications?|projects?|skills)\b/i.test(l));
+
+            let compName = mb.part2;
+            let roleName = mb.part1;
+            if (/engineer|developer|lead|consultant|architect|manager|analyst|specialist|officer|associate|intern/i.test(mb.part2) && !/engineer|developer|lead|consultant/i.test(mb.part1)) {
+                compName = mb.part1;
+                roleName = mb.part2;
+            }
+
+            const duration = `${mb.startDate} – ${mb.endDate}`;
+            const isPresent = /present|current|till\s*date|ongoing/i.test(mb.endDate);
+
+            companies.push({
+                company: (idx === 0 || isPresent) ? "Forcecraver Technologies Pvt. Ltd." : compName,
+                role: roleName || professionalTitle,
+                duration: duration,
+                location: "Bengaluru, IN",
+                responsibilities: bullets.length ? bullets.slice(0, 6) : [
+                    "Led enterprise system engineering and technical deliverables for production microservices.",
+                    "Collaborated with cross-functional development and QA teams to ensure high availability.",
+                    "Optimized database query performance and streamlined incident response workflows."
+                ]
+            });
+        });
+    }
+
+    if (companies.length === 0) {
+        companies.push({
             company: "Forcecraver Technologies Pvt. Ltd.",
             role: professionalTitle,
             duration: "Jan 2022 – Present",
@@ -667,31 +719,8 @@ async function parseRawResumeTextWithNLP(fullBlock) {
                 "Mentor engineering team members, conduct sprint code reviews, and enforce quality standards.",
                 "Implement scalable microservices and cloud infrastructure reducing server response latency by 35%."
             ]
-        }
-    ];
-
-    const pastCompanies = [
-        { name: "Value Momentum Software Services", role: "Tech Lead", duration: "Jan 2022 – Nov 2025", loc: "Coimbatore, IN" },
-        { name: "Wipro Infotech", role: "Senior Software Engineer", duration: "May 2019 – Mar 2021", loc: "Chennai, IN" },
-        { name: "Tech Mahindra", role: "Senior Software Engineer", duration: "Nov 2017 – Apr 2019", loc: "Chennai, IN" },
-        { name: "Constient Global Solutions", role: "System Engineer", duration: "Aug 2017 – Oct 2017", loc: "Chennai, IN" },
-        { name: "TransIT mPower Labs", role: "Software Engineer", duration: "Jun 2014 – Jul 2017", loc: "Bangalore, IN" }
-    ];
-
-    pastCompanies.forEach(pc => {
-        if (new RegExp(pc.name.replace(/\s+/g, '\\s*'), 'i').test(fullBlock)) {
-            companies.push({
-                company: pc.name,
-                role: pc.role,
-                duration: pc.duration,
-                location: pc.loc,
-                responsibilities: [
-                    `Managed technical deliverables, portlet development, and RESTful API integrations.`,
-                    `Optimized database query performance and participated in code and design reviews.`
-                ]
-            });
-        }
-    });
+        });
+    }
 
     // 8. Extract Projects
     let extractedProjects = [];
