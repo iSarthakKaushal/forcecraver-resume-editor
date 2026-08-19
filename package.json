@@ -2,9 +2,10 @@
   "name": "forcecraver-resume-template-generator",
   "version": "2.0.0",
   "description": "AI-Powered Universal Resume Template Generator with Groq and Ollama AI",
+  "main": "index.js",
   "scripts": {
-    "start": "node server/local-server.js",
-    "dev": "node server/local-server.js"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
   "keywords": [
     "resume-generator",
