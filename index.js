@@ -275,6 +275,7 @@ function normalizeCompaniesWithForcecraver(companies, title) {
 }
 
 function executeGroqRequest(cleanedText, modelName) {
+    const apiKey = (process.env.GROQ_API_KEY || GROQ_API_KEY || '').trim();
     return new Promise((resolve, reject) => {
         const payload = JSON.stringify({
             model: modelName,
@@ -283,18 +284,18 @@ function executeGroqRequest(cleanedText, modelName) {
                 { role: 'user', content: `Extract candidate resume details into JSON:\n\n${cleanedText}` }
             ],
             response_format: { type: 'json_object' },
-            temperature: 0.1,
-            max_tokens: 3000
+            temperature: 0.0,
+            max_tokens: 1500
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(payload)
             },
-            timeout: 30000
+            timeout: 20000
         }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);

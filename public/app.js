@@ -432,21 +432,20 @@ async function processUploadedFile(file) {
         }
 
         // Post-processing: Guarantee Forcecraver rules, valid projects & 6-7 humanized bullet points
-        setLoaderProgress(80, '3. Humanizing 6-7 Project Action Bullets...', 'Generating realistic engineering achievements & standardizing Forcecraver template...');
+        setLoaderProgress(85, '3. Finalizing Forcecraver Standards...', 'Generating realistic engineering achievements...');
         sanitizeAndEnrichStructuredData(structured);
         await humanizeProjectsInMemory(structured);
 
         appState.data = structured;
-        setLoaderProgress(100, '4. Rendering Live A4 Preview...', 'Finalizing live WYSIWYG editor and Word DOCX generator...');
+        setLoaderProgress(100, '4. Rendering Live A4 Preview...', 'Loading live WYSIWYG editor...');
 
-        setTimeout(() => {
-            loaderSection.style.display = 'none';
-            renderEntireWorkspace();
-            if (typeof confetti === 'function') {
-                confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
-            }
-            showToast(`Resume structured & humanized with Ollama (${appState.ollamaModel})!`, 'success');
-        }, 400);
+        // Instant Zero-Delay Workspace Render
+        loaderSection.style.display = 'none';
+        renderEntireWorkspace();
+        if (typeof confetti === 'function') {
+            confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+        }
+        showToast('Resume parsed & humanized in record time!', 'success');
 
     } catch (err) {
         console.error('File parsing error:', err);
@@ -472,42 +471,45 @@ function setLoaderProgress(percent, title, msg) {
     });
 }
 
-// PDF Text Extractor Helper with Y-Coordinate Line Grouping
+// High-Speed Parallel PDF Text Extractor Helper with Y-Coordinate Line Grouping
 async function extractTextFromPdf(arrayBuffer) {
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0), disableWorker: true });
     const pdf = await loadingTask.promise;
-    let fullText = '';
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
+    
+    const pagePromises = Array.from({ length: pdf.numPages }, async (_, index) => {
+        const pageNum = index + 1;
+        const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
-        if (textContent.items && textContent.items.length > 0) {
-            const validItems = textContent.items.filter(it => it.str && it.str.trim() && it.transform);
-            validItems.sort((a, b) => b.transform[5] - a.transform[5]);
+        if (!textContent.items || textContent.items.length === 0) return '';
 
-            const lines = [];
-            validItems.forEach(item => {
-                const y = item.transform[5];
-                const fontSize = Math.abs(item.transform[0]) || 10;
-                const threshold = Math.max(3.5, fontSize * 0.45);
+        const validItems = textContent.items.filter(it => it.str && it.str.trim() && it.transform);
+        validItems.sort((a, b) => b.transform[5] - a.transform[5]);
 
-                let line = lines.find(l => Math.abs(l.y - y) <= threshold);
-                if (!line) {
-                    line = { y, items: [] };
-                    lines.push(line);
-                }
-                line.items.push(item);
-            });
+        const lines = [];
+        validItems.forEach(item => {
+            const y = item.transform[5];
+            const fontSize = Math.abs(item.transform[0]) || 10;
+            const threshold = Math.max(3.5, fontSize * 0.45);
 
-            lines.forEach(line => {
-                line.items.sort((a, b) => a.transform[4] - b.transform[4]);
-                const lineStr = line.items.map(it => it.str).join(' ').trim();
-                if (lineStr) fullText += lineStr + '\n';
-            });
-            fullText += '\n';
-        }
-    }
-    return fullText;
+            let line = lines.find(l => Math.abs(l.y - y) <= threshold);
+            if (!line) {
+                line = { y, items: [] };
+                lines.push(line);
+            }
+            line.items.push(item);
+        });
+
+        let pageText = '';
+        lines.forEach(line => {
+            line.items.sort((a, b) => a.transform[4] - b.transform[4]);
+            const lineStr = line.items.map(it => it.str).join(' ').trim();
+            if (lineStr) pageText += lineStr + '\n';
+        });
+        return pageText;
+    });
+
+    const pageTexts = await Promise.all(pagePromises);
+    return pageTexts.join('\n\n');
 }
 
 /* ==========================================================================
