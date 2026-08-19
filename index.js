@@ -96,7 +96,7 @@ Return ONLY a valid JSON object matching this exact schema:
       "company": "Forcecraver Technologies Pvt. Ltd.",
       "role": "Site Reliability & Observability Engineer",
       "duration": "Sept 2021 – Present",
-      "location": "Bengaluru, IN",
+      "location": "DELHI, IN",
       "responsibilities": [
         "Led reliability and observability for large-scale production distributed services using New Relic and Datadog, reducing incident detection time by 28%.",
         "Defined and enforced SLIs/SLOs and error budgets for critical microservices, improving availability from 99.5% to 99.9%."

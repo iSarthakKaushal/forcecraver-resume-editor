@@ -1081,9 +1081,10 @@ function sanitizeAndEnrichStructuredData(data) {
             }
 
             const pRole = p.role || data.title || "Developer";
-            const pEnv = p.environment || `${data.skills.languages || 'Java, Spring Boot'}, ${data.skills.frontend || 'React, Liferay DXP'}, ${data.skills.databases || 'PostgreSQL'}`;
-            const pClient = p.client || 'Confidential';
-            const pDesc = cleanProjectDescription(p.description, pName, pRole, pEnv);
+            const pEnv = p.environment || '';
+            const pClient = p.client || '';
+            const pDuration = p.duration || '';
+            const pDesc = p.description ? cleanProjectDescription(p.description, pName, pRole, pEnv) : '';
 
             let pBullets = [];
             if (Array.isArray(p.responsibilities)) {
@@ -1100,7 +1101,7 @@ function sanitizeAndEnrichStructuredData(data) {
             return {
                 name: pName,
                 role: pRole,
-                duration: p.duration || "12 Months",
+                duration: pDuration,
                 client: pClient,
                 environment: pEnv,
                 description: pDesc,
@@ -1680,15 +1681,19 @@ function renderLiveResumePreview() {
 
                 const pTitle = p.name && p.name.trim() ? escapeHtml(p.name) : `PROJECT ${idx + 1}`;
 
+                const durHtml = p.duration && p.duration.trim() ? `<span class="res-exp-date">${escapeHtml(p.duration)}</span>` : '';
+                const clientHtml = p.client && p.client.trim() ? `<div class="res-proj-meta-item"><span class="res-proj-meta-label">• Client</span>: <span class="res-proj-meta-val">${escapeHtml(p.client)}</span></div>` : '';
+                const envHtml = p.environment && p.environment.trim() ? `<div class="res-proj-meta-item res-proj-env"><span class="res-proj-meta-label">• Environment</span>: <span class="res-proj-meta-val">${escapeHtml(p.environment)}</span></div>` : '';
+
                 card.innerHTML = `
                     <div class="res-proj-top">
                         <span class="res-proj-name">PROJECT ${idx + 1}: ${pTitle}</span>
-                        <span class="res-exp-date">${escapeHtml(p.duration || '')}</span>
+                        ${durHtml}
                     </div>
                     <div class="res-proj-meta-grid">
                         <div class="res-proj-meta-item"><span class="res-proj-meta-label">• Role</span>: <span class="res-proj-meta-val">${escapeHtml(p.role || '')}</span></div>
-                        <div class="res-proj-meta-item"><span class="res-proj-meta-label">• Client</span>: <span class="res-proj-meta-val">${escapeHtml(p.client || 'Confidential')}</span></div>
-                        <div class="res-proj-meta-item res-proj-env"><span class="res-proj-meta-label">• Environment</span>: <span class="res-proj-meta-val">${escapeHtml(p.environment || '')}</span></div>
+                        ${clientHtml}
+                        ${envHtml}
                     </div>
                     ${p.description ? `<div class="res-proj-desc">• <strong>Description:</strong> ${escapeHtml(p.description)}</div>` : ''}
                     ${bulletsHtml}
@@ -1888,31 +1893,47 @@ async function exportToDocx() {
         if (d.projects && d.projects.length) {
             docChildren.push(addSectionHeading("PROJECTS DETAIL"));
             d.projects.forEach((p, idx) => {
+                const headerRuns = [
+                    new TextRun({ text: `PROJECT ${idx + 1}: ${p.name.toUpperCase()}`, bold: true, size: 20, font: "Arial", color: "0F172A" })
+                ];
+                if (p.duration && p.duration.trim()) {
+                    headerRuns.push(new TextRun({ text: `\t${p.duration}`, bold: true, size: 18, font: "Arial", color: "475569" }));
+                }
+
                 docChildren.push(
                     new Paragraph({
                         spacing: { before: 140, after: 40 },
-                        children: [
-                            new TextRun({ text: `PROJECT ${idx + 1}: ${p.name.toUpperCase()}`, bold: true, size: 20, font: "Arial", color: "0F172A" }),
-                            new TextRun({ text: `\t${p.duration || ''}`, bold: true, size: 18, font: "Arial", color: "475569" })
-                        ]
-                    }),
-                    new Paragraph({
-                        spacing: { after: 30 },
-                        children: [
-                            new TextRun({ text: "• Role: ", bold: true, size: 18, font: "Arial", color: "334155" }),
-                            new TextRun({ text: p.role + " | ", size: 18, font: "Arial", color: "0F172A" }),
-                            new TextRun({ text: "• Client: ", bold: true, size: 18, font: "Arial", color: "334155" }),
-                            new TextRun({ text: p.client || 'Confidential', size: 18, font: "Arial", color: "0F172A" })
-                        ]
-                    }),
-                    new Paragraph({
-                        spacing: { after: 60 },
-                        children: [
-                            new TextRun({ text: "• Environment: ", bold: true, size: 18, font: "Arial", color: "334155" }),
-                            new TextRun({ text: p.environment || '', size: 18, font: "Arial", color: "0F172A" })
-                        ]
+                        children: headerRuns
                     })
                 );
+
+                const metaRuns = [
+                    new TextRun({ text: "• Role: ", bold: true, size: 18, font: "Arial", color: "334155" }),
+                    new TextRun({ text: p.role ? String(p.role) : "Developer", size: 18, font: "Arial", color: "0F172A" })
+                ];
+                if (p.client && p.client.trim()) {
+                    metaRuns.push(new TextRun({ text: " | • Client: ", bold: true, size: 18, font: "Arial", color: "334155" }));
+                    metaRuns.push(new TextRun({ text: p.client, size: 18, font: "Arial", color: "0F172A" }));
+                }
+
+                docChildren.push(
+                    new Paragraph({
+                        spacing: { after: 30 },
+                        children: metaRuns
+                    })
+                );
+
+                if (p.environment && p.environment.trim()) {
+                    docChildren.push(
+                        new Paragraph({
+                            spacing: { after: 60 },
+                            children: [
+                                new TextRun({ text: "• Environment: ", bold: true, size: 18, font: "Arial", color: "334155" }),
+                                new TextRun({ text: p.environment, size: 18, font: "Arial", color: "0F172A" })
+                            ]
+                        })
+                    );
+                }
 
                 if (p.description) {
                     docChildren.push(
