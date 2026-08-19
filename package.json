@@ -1,10 +1,10 @@
 {
   "name": "forcecraver-resume-template-generator",
   "version": "2.0.0",
-  "description": "AI-Powered Universal Resume Template Generator with Local AI Extraction and Humanizer",
+  "description": "AI-Powered Universal Resume Template Generator with Groq and Ollama AI",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node local-server.js",
+    "dev": "node local-server.js"
   },
   "keywords": [
     "resume-generator",
@@ -12,8 +12,8 @@
     "pdf-resume",
     "docx-export",
     "ai-humanizer",
-    "ollama",
-    "groq"
+    "groq",
+    "ollama"
   ],
   "author": "Forcecraver",
   "license": "MIT",
