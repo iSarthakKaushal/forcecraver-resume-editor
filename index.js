@@ -188,10 +188,7 @@ function normalizeExperienceString(exp, role, summary, companies) {
 
 function cleanSummaryString(summary, title, experience) {
     if (!summary || typeof summary !== 'string') {
-        const role = title || 'Software Developer';
-        const exp = experience ? experience.replace(/Experience:\s*/i, '').replace(/[()]/g, '').trim() : '';
-        const expClause = exp ? `with ${exp} of` : 'with';
-        return `Dynamic and results-driven ${role} ${expClause} demonstrated expertise across modern technologies and distributed software systems. Proven track record of architecting scalable applications and collaborating with engineering teams.`;
+        return '';
     }
 
     let s = summary.trim();
@@ -203,11 +200,8 @@ function cleanSummaryString(summary, title, experience) {
     s = s.replace(/(?:\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '');
     s = s.replace(/\s+/g, ' ').trim();
 
-    if (/\b(?:with|of|in|and|for)\s*\.?$/i.test(s) || s.length < 50) {
-        const role = title || 'Software Developer';
-        const exp = experience ? experience.replace(/Experience:\s*/i, '').replace(/[()]/g, '').trim() : '';
-        const expClause = exp ? `with ${exp} of` : 'with';
-        return `Dynamic and results-driven ${role} ${expClause} demonstrated expertise across modern technologies and distributed software systems. Proven track record of architecting scalable applications and collaborating with engineering teams.`;
+    if (s.length < 25) {
+        return '';
     }
 
     if (!/[.!?]$/.test(s)) s += '.';
@@ -251,17 +245,7 @@ function normalizeSkillsStructure(skillsInput) {
 
 function normalizeCompaniesWithForcecraver(companies, title) {
     if (!Array.isArray(companies) || companies.length === 0) {
-        return [{
-            company: "Forcecraver Technologies Pvt. Ltd.",
-            role: title || "Software Engineer",
-            duration: "2022 – Present",
-            location: "Bengaluru, IN",
-            responsibilities: [
-                "Spearhead core software development and architectural deliverables for enterprise clients.",
-                "Collaborate with cross-functional engineering and QA teams to maintain code quality.",
-                "Implement scalable backend APIs and optimize database query performance."
-            ]
-        }];
+        return [];
     }
 
     let presentIndex = -1;

@@ -890,7 +890,7 @@ function normalizeExperienceString(exp, role, summary, companies) {
 
 function normalizeProfessionalSummary(summary, title, experience, skills) {
     if (!summary || typeof summary !== 'string') {
-        return generateDefaultSummary(title, experience, skills);
+        return '';
     }
 
     let s = summary.trim();
@@ -913,9 +913,8 @@ function normalizeProfessionalSummary(summary, title, experience, skills) {
     // 5. Normalize spaces
     s = s.replace(/\s+/g, ' ').trim();
 
-    // 6. Fix trailing broken sentences like "with 7 + years of."
-    if (/\b(?:with|of|in|and|for)\s*\.?$/i.test(s) || s.length < 50) {
-        return generateDefaultSummary(title, experience, skills);
+    if (s.length < 25) {
+        return '';
     }
 
     if (!/[.!?]$/.test(s)) s += '.';
@@ -924,16 +923,10 @@ function normalizeProfessionalSummary(summary, title, experience, skills) {
 }
 
 function generateDefaultSummary(title, experience, skills) {
-    const roleTitle = title || 'Senior Software Engineer';
-    const cleanExp = experience ? experience.replace(/Experience:\s*/i, '').replace(/[()]/g, '').trim() : '';
-    const expClause = cleanExp ? `with over ${cleanExp} of` : 'with';
-    const cloudStack = (skills && skills.cloud) ? skills.cloud : 'modern cloud infrastructure';
-    const backendStack = (skills && skills.languages) ? skills.languages : 'scalable software systems';
-
-    return `Dynamic and results-driven ${roleTitle} ${expClause} comprehensive expertise in designing, developing, and deploying enterprise applications. Demonstrated proficiency across ${cloudStack}, ${backendStack}, and distributed architectures. Proven track record of optimizing system performance, leading cross-functional engineering deliverables, and maintaining high software quality standards.`;
+    return '';
 }
 
-// Guarantee valid project titles, roles, environments, exactly 6-7 bullets, and single Forcecraver company
+// Guarantee valid project titles, roles, environments, and clean company structure without fake injections
 function sanitizeAndEnrichStructuredData(data) {
     if (!data) return;
 
@@ -948,16 +941,10 @@ function sanitizeAndEnrichStructuredData(data) {
     // Normalize Summary (Strict isolation from project highlights)
     data.summary = normalizeProfessionalSummary(data.summary, data.title, data.experience, data.skills);
 
-    // Normalize Skills as dynamic array of categories
+    // Normalize Skills as dynamic array of categories (No fake defaults)
     data.skills = normalizeSkillsStructure(data.skills);
-    if (!data.skills || data.skills.length === 0) {
-        data.skills = [
-            { label: "Cloud & DevOps", value: "AWS, Azure DevOps, Docker, Kubernetes, CI/CD" },
-            { label: "Languages & Stack", value: "Java, Python, Spring Boot, REST APIs" },
-            { label: "Frontend & UI", value: "React, JavaScript, HTML5, CSS3" },
-            { label: "Databases & Storage", value: "PostgreSQL, Oracle, MySQL, Redis" },
-            { label: "Tools & Methodologies", value: "Git, VS Code, Jira, Agile, Scrum" }
-        ];
+    if (!data.skills) {
+        data.skills = [];
     }
 
     // Normalize Certifications (Strict Filtering without fake defaults)
@@ -989,19 +976,7 @@ function sanitizeAndEnrichStructuredData(data) {
 
     // Normalize Companies (Accurately detect the PRESENT company and replace with Forcecraver)
     if (!Array.isArray(data.companies) || data.companies.length === 0) {
-        data.companies = [
-            {
-                company: "Forcecraver Technologies Pvt. Ltd.",
-                role: data.title || "Technical Lead",
-                duration: "Jan 2022 – Present",
-                location: "Bengaluru, IN",
-                responsibilities: [
-                    "Spearhead core software development and architectural deliverables for enterprise clients.",
-                    "Collaborate with cross-functional engineering and QA teams to maintain code quality.",
-                    "Implement scalable backend APIs and optimize database query performance."
-                ]
-            }
-        ];
+        data.companies = [];
     } else {
         // Find the PRESENT / CURRENT company:
         let presentIdx = -1;
@@ -1036,7 +1011,7 @@ function sanitizeAndEnrichStructuredData(data) {
             const compName = isPresent ? "Forcecraver Technologies Pvt. Ltd." : (c.company || c.name || "Previous Organization");
             const compObj = {
                 company: compName,
-                role: c.role || c.title || data.title || "Software Engineer",
+                role: c.role || c.title || data.title || "",
                 duration: c.duration || (isPresent ? (c.duration || "Present") : ""),
                 location: c.location || "",
                 responsibilities: []
@@ -1048,13 +1023,6 @@ function sanitizeAndEnrichStructuredData(data) {
                 compObj.responsibilities = c.responsibilities.split('\n').map(r => r.trim()).filter(Boolean);
             }
 
-            if (compObj.responsibilities.length === 0) {
-                compObj.responsibilities = [
-                    "Spearhead core software development and architectural deliverables for enterprise clients.",
-                    "Collaborate with cross-functional engineering and QA teams to maintain code quality.",
-                    "Implement scalable backend APIs and optimize database query performance."
-                ];
-            }
             return compObj;
         });
 
@@ -1077,10 +1045,10 @@ function sanitizeAndEnrichStructuredData(data) {
             pName = pName.replace(/^project\s*(?:#?\d+|\d+|:)\s*[:.-]?\s*/i, '').replace(/^\d+[\.\)]\s*/, '').trim();
 
             if (!pName) {
-                pName = `Enterprise Software Project ${idx + 1}`;
+                pName = `Project ${idx + 1}`;
             }
 
-            const pRole = p.role || data.title || "Developer";
+            const pRole = p.role || data.title || "";
             const pEnv = p.environment || '';
             const pClient = p.client || '';
             const pDuration = p.duration || '';
@@ -1091,11 +1059,6 @@ function sanitizeAndEnrichStructuredData(data) {
                 pBullets = p.responsibilities.map(b => String(b)).filter(Boolean);
             } else if (typeof p.responsibilities === 'string') {
                 pBullets = p.responsibilities.split('\n').map(b => b.trim()).filter(Boolean);
-            }
-
-            // If candidate provided 0 bullets, generate relevant bullets
-            if (pBullets.length === 0) {
-                pBullets = generateHumanizedProjectBullets(pName, pEnv, pRole);
             }
 
             return {
@@ -1112,7 +1075,7 @@ function sanitizeAndEnrichStructuredData(data) {
 
 function cleanProjectDescription(rawDesc, projectName, role, env) {
     if (!rawDesc || typeof rawDesc !== 'string') {
-        return `Engineered a scalable enterprise solution delivering automated processing, high availability, and robust API workflows.`;
+        return '';
     }
 
     let s = rawDesc.trim();
@@ -1128,6 +1091,10 @@ function cleanProjectDescription(rawDesc, projectName, role, env) {
     s = s.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '');
     s = s.replace(/\s+/g, ' ').trim();
 
+    if (s.length < 15) {
+        return '';
+    }
+
     // 4. Limit to max 2 crisp sentences / ~200 characters
     const sentences = s.split(/(?<=[.!?])\s+/).filter(Boolean);
     if (sentences.length > 2) {
@@ -1135,10 +1102,6 @@ function cleanProjectDescription(rawDesc, projectName, role, env) {
     }
     if (s.length > 220) {
         s = s.substring(0, 217).trim() + '...';
-    }
-
-    if (s.length < 25) {
-        return `Engineered an end-to-end scalable application for ${projectName || 'enterprise workflows'}, optimizing API performance and data processing.`;
     }
 
     if (!/[.!?]$/.test(s)) s += '.';
@@ -1432,7 +1395,7 @@ function renderDynamicProjectsForm() {
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>Client</label>
-                    <input type="text" class="form-input" value="${escapeHtml(p.client || 'Enterprise Client')}" oninput="updateProjectField(${idx}, 'client', this.value)">
+                    <input type="text" class="form-input" value="${escapeHtml(p.client || '')}" oninput="updateProjectField(${idx}, 'client', this.value)">
                 </div>
                 <div class="form-group">
                     <label>Duration</label>
@@ -1448,7 +1411,7 @@ function renderDynamicProjectsForm() {
                 <textarea class="form-textarea" rows="2" oninput="updateProjectField(${idx}, 'description', this.value)">${escapeHtml(p.description || '')}</textarea>
             </div>
             <div class="form-group">
-                <label>Responsibilities & Achievements (6-7 Bullet Lines, One per line)</label>
+                <label>Responsibilities & Achievements (Bullet Lines, One per line)</label>
                 <textarea class="form-textarea bullet-textarea" rows="6" oninput="updateProjectBullets(${idx}, this.value)">${escapeHtml((p.responsibilities || []).join('\n'))}</textarea>
             </div>
         `;
@@ -1483,14 +1446,11 @@ window.deleteExperienceItem = (idx) => {
 };
 function addEmptyExperience() {
     appState.data.companies.push({
-        company: "Previous Organization Name",
-        role: "Software Engineer",
-        duration: "Jan 2018 – May 2021",
-        location: "Bengaluru, IN",
-        responsibilities: [
-            "Contributed to core feature engineering and backend microservices.",
-            "Integrated third-party APIs and performed code optimization."
-        ]
+        company: "",
+        role: "",
+        duration: "",
+        location: "",
+        responsibilities: []
     });
     renderDynamicExperienceForm();
     renderLiveResumePreview();
@@ -1518,13 +1478,13 @@ window.deleteProjectItem = (idx) => {
 function addEmptyProject() {
     const num = (appState.data.projects.length + 1);
     appState.data.projects.push({
-        name: `Enterprise Cloud Application ${num}`,
-        role: appState.data.title || "Senior Software Engineer",
-        duration: "12 Months",
-        client: "Global Client (Confidential)",
-        environment: appState.data.skills.languages + ", " + appState.data.skills.cloud,
-        description: "Enterprise software solution engineered to automate distributed workflows and optimize data processing.",
-        responsibilities: generateHumanizedProjectBullets(`Enterprise Cloud Application ${num}`, appState.data.skills.cloud, appState.data.title)
+        name: `Project ${num}`,
+        role: appState.data.title || "",
+        duration: "",
+        client: "",
+        environment: "",
+        description: "",
+        responsibilities: []
     });
     renderDynamicProjectsForm();
     renderLiveResumePreview();
