@@ -1037,8 +1037,8 @@ function sanitizeAndEnrichStructuredData(data) {
             const compObj = {
                 company: compName,
                 role: c.role || c.title || data.title || "Software Engineer",
-                duration: c.duration || (isPresent ? "2022 – Present" : "2020 – 2022"),
-                location: c.location || "Bengaluru, IN",
+                duration: c.duration || (isPresent ? (c.duration || "Present") : ""),
+                location: c.location || "",
                 responsibilities: []
             };
 

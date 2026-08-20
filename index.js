@@ -66,14 +66,16 @@ CRITICAL RULES:
    STRICT RULE: NEVER mix education table headers like "Degree / Exam", "Year", "Institution", "Result" into certifications.
 7. EDUCATION: Array of degrees with university/school/year/grades (e.g. ["B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA", "Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%", "Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"]).
    STRICT RULE: NEVER include table headers like "Degree / Exam", "Year", "Institution", "Result" as an education entry.
-8. COMPANIES: Extract EVERY SINGLE EMPLOYER / COMPANY from the candidate's Work Experience history in reverse chronological order (Present company first, followed by all previous companies like PwC, TCS, Wipro, etc.).
+8. COMPANIES: Extract actual employers where the candidate was formally employed (e.g. Epam Systems, Wipro, TCS, PwC).
    - Replace ONLY the present/first employer's company name with "Forcecraver Technologies Pvt. Ltd." while preserving candidate's authentic job title/role, exact duration, and exact bullet points from the resume.
-   - For ALL PAST / PREVIOUS companies (e.g. PwC, TCS, Infosys, etc.), retain their REAL authentic company names, authentic roles, authentic dates, and extract 2-4 key responsibility bullet points directly from the resume!
-   - STRICT RULE: NEVER omit past companies. Every employer in the candidate's work history must be included in the "companies" array!
-9. PROJECTS: Array of candidate's authentic projects from the PROJECTS section (name, role, duration, client, environment, description, responsibilities).
-   - If candidate's resume has NO separate Projects section, return an empty array "projects": []!
+   - For past employers, retain their real authentic company names, authentic roles, and authentic dates.
+   - If duration is given (e.g. "Aug 2021 – Present" or "Jan 2018 – May 2021"), keep the exact duration. If duration is NOT given, set "duration": "". NEVER invent fake dates like "2020 – 2022"!
+   - IMPORTANT: If a resume lists Client projects / project engagements under Work History (e.g. "Client: UnitedHealth Group", "Client: Kaiser Permanente", "Client: Wells Fargo"), do NOT classify those clients as employers in "companies". Extract them into the "projects" array instead!
+9. PROJECTS: Array of candidate's authentic projects (name, role, duration, client, environment, description, responsibilities).
+   - If a project specifies a client (e.g. "UnitedHealth Group, USA", "Kaiser Permanente, USA", "Wells Fargo"), set "client": "<Client Name>".
+   - If duration is given in the resume, set exact duration; if NOT given in the resume, set "duration": "". NEVER invent fake durations like "12 Months" or "2020 – 2022"!
    - Extract candidate's REAL project bullet points directly from the resume for "responsibilities".
-   - NEVER make up fake project names or copy projects from examples!
+   - If candidate's resume has NO separate projects or client engagements, return an empty array "projects": [].
 10. STRICT NO-HALLUCINATION RULE: If the candidate's resume does NOT contain an Education section, Certifications section, or separate Projects section, set that field strictly to an empty array []. NEVER make up fake degrees, fake certifications, or fake projects!
 
 Return ONLY a valid JSON object matching this exact schema:

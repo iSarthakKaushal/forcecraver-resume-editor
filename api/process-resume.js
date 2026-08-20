@@ -2,7 +2,6 @@ const https = require('https');
 const http = require('http');
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
 const SYSTEM_PROMPT = `You are an expert Technical Resume Strategist and Recruiter.
@@ -14,15 +13,33 @@ CRITICAL RULES:
    - Calculate total work experience ONLY from actual company/employment history. DO NOT calculate from education/college years (e.g. BCA/MCA years).
    - If candidate is a fresher, intern, student, or has under 1 year of total full-time experience, set experience strictly to "Experience: (Fresher / Intern)".
    - For experienced professionals, set to "Experience: (X+ Years)" based on actual work history years.
-3. TITLE: Professional designation (e.g. "Software Developer", "Senior QA Automation Engineer", "Senior Liferay DXP Full Stack Developer").
+3. TITLE: Professional designation (e.g. "Software Developer", "ServiceNow Developer", "Senior Salesforce Consultant", "Site Reliability Engineer").
 4. SUMMARY: Exactly 3 to 4 crisp sentences summarizing overall career background, core tech stack, and primary strengths.
    STRICT RULE: NEVER include project highlights, client names, tool dumps, or bullet points in the summary.
-5. SKILLS: Categorize into: cloud, languages, frontend, databases, tools.
-6. CERTIFICATIONS: Array of verified credentials (e.g. ["AWS Cloud Practitioner Essentials"]).
-7. EDUCATION: Array of degrees with university/year (e.g. ["Master of Computer Applications (MCA) – Amity University (2024–2026)"]).
-8. COMPANIES: Array of all employers (company, role, duration, location). Always set first (present) company to "Forcecraver Technologies Pvt. Ltd.". Retain authentic role and authentic duration.
-9. PROJECTS: Array of candidate's authentic projects from the PROJECTS section (e.g., "Scene Text Recognition & Assistive Vision System", "Face Recognition System", "Patient Crowdfunding Platform").
-   STRICT RULE: NEVER use company or client names as project titles.
+5. SKILLS: Extract the candidate's authentic skill categories and technologies directly from their resume (e.g. "ServiceNow Platform", "Development", "Integration", "Languages & Stack", "Tools & DevOps", "Methodologies", or standard categories).
+   Format skills as an array of objects:
+   "skills": [
+     { "label": "ServiceNow Platform", "value": "ITSM, CMDB, Service Catalog, Knowledge Management, Asset Management" },
+     { "label": "Development", "value": "Business Rules, Client Scripts, UI Policies, UI Actions, Script Includes, Flow Designer" },
+     { "label": "Integration", "value": "REST API, SOAP API, Integration Hub, Import Sets, Transform Maps, LDAP, OAuth 2.0" },
+     { "label": "Languages & Stack", "value": "JavaScript, HTML, CSS, XML, MySQL, SQL" },
+     { "label": "Tools & DevOps", "value": "Update Sets, ServiceNow Studio, Git, Jira" }
+   ]
+6. CERTIFICATIONS: Array of verified credentials only (e.g. ["ServiceNow Certified System Administrator (CSA)"]).
+   STRICT RULE: NEVER mix education table headers into certifications.
+7. EDUCATION: Array of degrees with university/school/year/grades (e.g. ["Bachelor of Commerce (B.COM) – Osmania University, Hyderabad, India"]).
+   STRICT RULE: NEVER include table headers as an education entry.
+8. COMPANIES: Extract actual employers where the candidate was formally employed (e.g. Epam Systems, Wipro, TCS, PwC).
+   - Replace ONLY the present/first employer's company name with "Forcecraver Technologies Pvt. Ltd." while preserving candidate's authentic job title/role, exact duration, and exact bullet points from the resume.
+   - For past employers, retain their real authentic company names, authentic roles, and authentic dates.
+   - If duration is given (e.g. "Aug 2021 – Present" or "Jan 2018 – May 2021"), keep the exact duration. If duration is NOT given, set "duration": "". NEVER invent fake dates like "2020 – 2022"!
+   - IMPORTANT: If a resume lists Client projects / project engagements under Work History (e.g. "Client: UnitedHealth Group", "Client: Kaiser Permanente", "Client: Wells Fargo"), do NOT classify those clients as employers in "companies". Extract them into the "projects" array instead!
+9. PROJECTS: Array of candidate's authentic projects (name, role, duration, client, environment, description, responsibilities).
+   - If a project specifies a client (e.g. "UnitedHealth Group, USA", "Kaiser Permanente, USA", "Wells Fargo"), set "client": "<Client Name>".
+   - If duration is given in the resume, set exact duration; if NOT given in the resume, set "duration": "". NEVER invent fake durations like "12 Months" or "2020 – 2022"!
+   - Extract candidate's REAL project bullet points directly from the resume for "responsibilities".
+   - If candidate's resume has NO separate projects or client engagements, return an empty array "projects": [].
+10. STRICT NO-HALLUCINATION RULE: If the candidate's resume does NOT contain an Education section, Certifications section, or separate Projects section, set that field strictly to an empty array []. NEVER make up fake degrees, fake certifications, or fake projects!
 
 Return ONLY a valid JSON object matching this exact schema:
 {
@@ -30,58 +47,64 @@ Return ONLY a valid JSON object matching this exact schema:
   "title": "Professional Title",
   "experience": "Experience: (X+ Years) OR Experience: (Fresher / Intern)",
   "summary": "Crisp 3-4 line professional summary...",
-  "skills": {
-    "cloud": "AWS, Docker, CI/CD",
-    "languages": "Python, Java, C++, SQL",
-    "frontend": "React, HTML5, CSS3, JavaScript",
-    "databases": "MySQL, PostgreSQL, MongoDB",
-    "tools": "Git, VS Code, Jira, Agile"
-  },
+  "skills": [
+    { "label": "ServiceNow Platform", "value": "ITSM, CMDB, Service Catalog" },
+    { "label": "Development", "value": "Business Rules, Client Scripts, Script Includes" },
+    { "label": "Integration", "value": "REST API, SOAP API, Integration Hub" }
+  ],
   "certifications": ["Cert 1"],
   "education": ["Degree 1"],
   "companies": [
     {
       "company": "Forcecraver Technologies Pvt. Ltd.",
-      "role": "Software Developer Intern",
-      "duration": "May 2025 – Jul 2025",
-      "location": "Noida, IN",
-      "responsibilities": ["Engineered real-time presentation tool.", "Optimized frame processing pipeline."]
+      "role": "ServiceNow Developer",
+      "duration": "Aug 2021 – Present",
+      "location": "DELHI, IN",
+      "responsibilities": [
+        "Developed and customized ServiceNow ITSM modules including Incident Management, Problem Management, and Change Management.",
+        "Implemented Flow Designer flows and Workflow solutions to automate service fulfillment."
+      ]
     }
   ],
   "projects": [
     {
-      "name": "Scene Text Recognition & Assistive Vision System",
-      "role": "Developer",
-      "duration": "Jan 2026 – Mar 2026",
-      "client": "N/A",
-      "environment": "Python, OpenCV, EasyOCR, EAST",
-      "description": "Designed a modular scene-text recognition pipeline for real-time video-frame analysis."
+      "name": "Healthcare IT Service Management & Automation Platform",
+      "role": "ServiceNow Developer",
+      "duration": "",
+      "client": "UnitedHealth Group, USA",
+      "environment": "ServiceNow ITSM, REST/SOAP APIs, JavaScript, Flow Designer",
+      "description": "Developed and enhanced a ServiceNow-based healthcare service management platform to automate IT operations.",
+      "responsibilities": [
+        "Gathered business requirements and customized ServiceNow applications to meet healthcare operational needs.",
+        "Configured and developed ITSM modules including Incident Management, Problem Management, and Service Catalog."
+      ]
     }
   ]
 }`;
 
+function filterAndCleanEduCertText(text) {
+    if (!text || typeof text !== 'string') return '';
+    let s = text.trim();
+    s = s.replace(/\b(?:Degree\s*(?:\/|&)?\s*Exam(?:ination)?|Year\s*(?:\/|&)?\s*Passing|Institution|Result|CGPA\s*Score|Score|Board\s*(?:\/|&)?\s*University)\b/gi, ' ');
+    s = s.replace(/^[•\-\*\d\.\(\)\s,;:|/]+/, '');
+    s = s.replace(/[\s|/]+$/, '');
+    s = s.replace(/\s+/g, ' ').trim();
+    if (/^(?:degree|exam|year|institution|result|score|percentage|passing|board|university|\/|\||-|\.)+$/i.test(s) || s.length < 3) {
+        return '';
+    }
+    return s;
+}
+
 function normalizeExperienceString(exp, role, summary, companies) {
-    let s = String(exp || '').trim();
-    const isInternOrFresher = /fresher|intern|trainee|student/i.test(s) ||
-                             /intern|trainee|student/i.test(role || '') ||
-                             /internship|seeking\s+(?:a\s+)?(?:full-time|entry|fresher)/i.test(summary || '');
-
-    if (isInternOrFresher) return 'Experience: (Fresher / Intern)';
-
-    if (Array.isArray(companies) && companies.length === 1) {
-        const c = companies[0];
-        if (/intern|trainee/i.test(c.role || '') || /months?|weeks?/i.test(c.duration || '')) {
-            return 'Experience: (Fresher / Intern)';
-        }
+    const combined = `${exp || ''} ${summary || ''}`;
+    const yearMatch = combined.match(/(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)/i) || String(exp || '').match(/(\d+(?:\.\d+)?)/);
+    if (yearMatch) {
+        const num = Math.floor(parseFloat(yearMatch[1]));
+        if (num >= 1) return `Experience: (${num}+ Years)`;
     }
-
-    const m = s.match(/(\d+(?:\.\d+)?)/);
-    if (m) {
-        const num = Math.floor(parseFloat(m[1]));
-        if (num === 0) return 'Experience: (Fresher / Intern)';
-        return `Experience: (${num}+ Years)`;
-    }
-
+    const isIntern = /fresher|intern|trainee|seeking\s+(?:a\s+)?(?:entry|fresher)/i.test(`${role || ''} ${summary || ''}`);
+    if (isIntern) return 'Experience: (Fresher / Intern)';
+    if (Array.isArray(companies) && companies.length >= 2) return 'Experience: (3+ Years)';
     return 'Experience: (Fresher / Intern)';
 }
 
@@ -89,11 +112,12 @@ function cleanSummaryString(summary, title, experience) {
     if (!summary || typeof summary !== 'string') {
         const role = title || 'Software Developer';
         const exp = experience ? experience.replace(/Experience:\s*/i, '').replace(/[()]/g, '').trim() : '';
-        const expClause = exp ? `with ${exp} of` : 'with';
+        const expClause = exp ? `with over ${exp} of` : 'with';
         return `Dynamic and results-driven ${role} ${expClause} demonstrated expertise across modern technologies and distributed software systems. Proven track record of architecting scalable applications and collaborating with engineering teams.`;
     }
 
     let s = summary.trim();
+    s = s.replace(/^(?:CORE\s*PROFICIENCIES|PROFESSIONAL\s*SUMMARY|EXECUTIVE\s*SUMMARY|CORE\s*COMPETENCIES|PROFILE\s*SUMMARY)\s*[:.-]?\s*/i, '');
     s = s.replace(/(?:Project\s*Highlight|Project\s*Description|Key\s*Contributions|Key\s*Responsibilities|Client\s*:|Environment\s*:|Tools\/Tech\s*:)[\s\S]*/i, '');
     s = s.replace(/^[•\-\*\d\.\(\)\s,;:|]+/, '');
     s = s.replace(/^[a-z0-9]+\s*\.\s*/i, '');
@@ -101,10 +125,10 @@ function cleanSummaryString(summary, title, experience) {
     s = s.replace(/(?:\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/g, '');
     s = s.replace(/\s+/g, ' ').trim();
 
-    if (s.length < 50) {
+    if (/\b(?:with|of|in|and|for)\s*\.?$/i.test(s) || s.length < 50) {
         const role = title || 'Software Developer';
         const exp = experience ? experience.replace(/Experience:\s*/i, '').replace(/[()]/g, '').trim() : '';
-        const expClause = exp ? `with ${exp} of` : 'with';
+        const expClause = exp ? `with over ${exp} of` : 'with';
         return `Dynamic and results-driven ${role} ${expClause} demonstrated expertise across modern technologies and distributed software systems. Proven track record of architecting scalable applications and collaborating with engineering teams.`;
     }
 
@@ -112,17 +136,51 @@ function cleanSummaryString(summary, title, experience) {
     return s;
 }
 
+function normalizeSkillsStructure(skillsInput) {
+    if (!skillsInput) return [];
+    if (Array.isArray(skillsInput)) {
+        return skillsInput.map(item => {
+            if (typeof item === 'object' && item !== null) {
+                const label = item.label || item.category || item.name || 'Core Skills';
+                const val = item.value || item.val || item.skills || '';
+                return { label: String(label).trim(), value: String(val).trim() };
+            }
+            return { label: 'Key Skills', value: String(item).trim() };
+        }).filter(s => s.value.length > 0);
+    }
+    if (typeof skillsInput === 'object') {
+        const list = [];
+        const labelMap = {
+            cloud: 'Cloud & DevOps',
+            languages: 'Languages & Stack',
+            frontend: 'Frontend & Portals',
+            databases: 'Databases & Storage',
+            tools: 'Tools & Automation'
+        };
+        for (const [k, v] of Object.entries(skillsInput)) {
+            if (v && String(v).trim()) {
+                const label = labelMap[k] || k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+                list.push({ label: label.charAt(0).toUpperCase() + label.slice(1), value: String(v).trim() });
+            }
+        }
+        return list;
+    }
+    if (typeof skillsInput === 'string' && skillsInput.trim()) {
+        return [{ label: 'Core Technical Skills', value: skillsInput.trim() }];
+    }
+    return [];
+}
+
 function normalizeCompaniesWithForcecraver(companies, title) {
     if (!Array.isArray(companies) || companies.length === 0) {
         return [{
             company: "Forcecraver Technologies Pvt. Ltd.",
-            role: title || "Software Engineer",
-            duration: "2022 – Present",
-            location: "Bengaluru, IN",
+            role: title || "Software Developer",
+            duration: "Aug 2021 – Present",
+            location: "DELHI, IN",
             responsibilities: [
                 "Spearhead core software development and architectural deliverables for enterprise clients.",
-                "Collaborate with cross-functional engineering and QA teams to maintain code quality.",
-                "Implement scalable backend APIs and optimize database query performance."
+                "Collaborate with cross-functional engineering and QA teams to maintain code quality."
             ]
         }];
     }
@@ -172,27 +230,28 @@ function normalizeCompaniesWithForcecraver(companies, title) {
     return result;
 }
 
-function processWithGroq(cleanedText) {
+function executeGroqRequest(cleanedText, modelName) {
+    const apiKey = (process.env.GROQ_API_KEY || GROQ_API_KEY || '').trim();
     return new Promise((resolve, reject) => {
         const payload = JSON.stringify({
-            model: GROQ_MODEL,
+            model: modelName,
             messages: [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'user', content: `Extract candidate resume details into JSON:\n\n${cleanedText}` }
             ],
             response_format: { type: 'json_object' },
-            temperature: 0.1,
-            max_tokens: 3000
+            temperature: 0.0,
+            max_tokens: 3500
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(payload)
             },
-            timeout: 30000
+            timeout: 40000
         }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
@@ -219,6 +278,27 @@ function processWithGroq(cleanedText) {
         req.write(payload);
         req.end();
     });
+}
+
+async function processWithGroq(cleanedText) {
+    const models = [
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
+        'qwen/qwen3.6-27b'
+    ];
+
+    let lastError = null;
+    for (const modelName of models) {
+        try {
+            const content = await executeGroqRequest(cleanedText, modelName);
+            if (content && content.length > 20) {
+                return content;
+            }
+        } catch (err) {
+            lastError = err;
+        }
+    }
+    throw new Error(`All Groq models failed. Last error: ${lastError ? lastError.message : 'Unknown'}`);
 }
 
 function processWithOllama(cleanedText, model = 'qwen2.5:latest') {
@@ -248,11 +328,14 @@ function processWithOllama(cleanedText, model = 'qwen2.5:latest') {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(payload)
             },
-            timeout: 180000
+            timeout: 60000
         }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
+                if (res.statusCode >= 400) {
+                    return reject(new Error(`Ollama returned status ${res.statusCode}: ${data}`));
+                }
                 try {
                     const parsed = JSON.parse(data);
                     const rawContent = parsed.message?.content || parsed.response || '';
@@ -265,7 +348,7 @@ function processWithOllama(cleanedText, model = 'qwen2.5:latest') {
 
         req.on('timeout', () => {
             req.destroy();
-            reject(new Error('Ollama request timed out'));
+            reject(new Error('Ollama request timed out after 60s'));
         });
 
         req.on('error', reject);
@@ -275,23 +358,25 @@ function processWithOllama(cleanedText, model = 'qwen2.5:latest') {
 }
 
 module.exports = async (req, res) => {
+    // Enable CORS
+    res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
 
     if (req.method === 'OPTIONS') {
-        res.writeHead(204);
-        res.end();
+        res.status(200).end();
         return;
     }
 
     if (req.method !== 'POST') {
-        res.writeHead(405, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+        res.status(405).json({ error: 'Method Not Allowed' });
         return;
     }
 
-    // Helper to read body from stream if not already parsed
     let body = req.body;
     if (!body || typeof body !== 'object') {
         body = await new Promise((resolve) => {
@@ -310,8 +395,7 @@ module.exports = async (req, res) => {
     const { text, model = 'qwen2.5:latest' } = body || {};
 
     if (!text || String(text).trim().length === 0) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'No resume text provided' }));
+        res.status(400).json({ error: 'No resume text provided' });
         return;
     }
 
@@ -323,9 +407,11 @@ module.exports = async (req, res) => {
         .substring(0, 8000);
 
     const startTime = Date.now();
+    const apiKey = (process.env.GROQ_API_KEY || GROQ_API_KEY || '').trim();
+
     try {
         let rawContent = '';
-        if (GROQ_API_KEY) {
+        if (apiKey) {
             rawContent = await processWithGroq(cleanedText);
         } else {
             rawContent = await processWithOllama(cleanedText, model);
@@ -349,18 +435,17 @@ module.exports = async (req, res) => {
         const jsonResult = JSON.parse(cleanJsonStr);
         jsonResult.experience = normalizeExperienceString(jsonResult.experience, jsonResult.title, jsonResult.summary, jsonResult.companies);
         jsonResult.summary = cleanSummaryString(jsonResult.summary, jsonResult.title, jsonResult.experience);
+        jsonResult.skills = normalizeSkillsStructure(jsonResult.skills);
         jsonResult.companies = normalizeCompaniesWithForcecraver(jsonResult.companies, jsonResult.title);
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
+        res.status(200).json({
             success: true,
-            provider: GROQ_API_KEY ? 'groq' : 'ollama',
+            provider: apiKey ? 'groq' : 'ollama',
             elapsedMs,
             data: jsonResult
-        }));
+        });
     } catch (err) {
         console.error('Error processing resume:', err.message);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message }));
+        res.status(500).json({ error: err.message });
     }
 };
