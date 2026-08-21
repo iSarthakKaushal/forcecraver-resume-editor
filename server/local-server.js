@@ -253,7 +253,7 @@ function processWithGroq(cleanedText) {
             ],
             response_format: { type: 'json_object' },
             temperature: 0.0,
-            max_tokens: 8192
+            max_tokens: 4000
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {

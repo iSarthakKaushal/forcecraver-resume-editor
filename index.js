@@ -28,7 +28,7 @@ loadEnvFile();
 
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
 const MIME_TYPES = {
@@ -288,7 +288,7 @@ function executeGroqRequest(cleanedText, modelName) {
             ],
             response_format: { type: 'json_object' },
             temperature: 0.0,
-            max_tokens: 8192
+            max_tokens: 4000
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {
@@ -334,12 +334,10 @@ async function processWithGroq(cleanedText) {
     }
 
     const candidateModels = [
-        (process.env.GROQ_MODEL || GROQ_MODEL || 'openai/gpt-oss-120b').trim(),
-        'openai/gpt-oss-120b',
-        'openai/gpt-oss-20b',
-        'qwen/qwen3.6-27b',
-        'groq/compound',
-        'groq/compound-mini'
+        (process.env.GROQ_MODEL || GROQ_MODEL || 'llama-3.3-70b-versatile').trim(),
+        'llama-3.3-70b-versatile',
+        'llama-3.1-8b-instant',
+        'mixtral-8x7b-32768'
     ];
     const uniqueModels = Array.from(new Set(candidateModels.filter(Boolean)));
     const errors = [];
