@@ -41,107 +41,53 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon'
 };
 
-const SYSTEM_PROMPT = `You are an elite, highly accurate Technical Resume Parser & Information Extraction Engine.
-Your sole mission is 100% accurate, complete, and lossless data extraction from the provided candidate resume into valid JSON format.
+const SYSTEM_PROMPT = `You are a high-speed, loss-free Technical Resume JSON Parser. Your objective is to parse candidate resumes with 100% completeness into structured JSON.
 
-CRITICAL EXTRACTION DIRECTIVES (ZERO DATA LOSS):
-1. NAME: Extract candidate's authentic full name. Completely omit phone numbers, emails, addresses, links, or headers.
-2. TITLE: Primary professional job title, headline, or current role directly from the resume.
-3. EXPERIENCE BADGE:
-   - Calculate total full-time professional experience strictly from the employment/work history dates (NOT from college/education graduation years).
-   - If candidate is a student/fresher/intern or has < 1 year experience: "Experience: (Fresher / Intern)".
-   - For experienced professionals: "Experience: (X+ Years)" (e.g. "Experience: (9+ Years)").
-4. SUMMARY: Extract candidate's professional summary / profile text (3-4 sentences). Omit raw contact info or bulleted project dumps. If none exists, return "".
-5. SKILLS (100% COMPLETE):
-   - Extract ALL technical skills, programming languages, tools, frameworks, databases, cloud platforms, and libraries present anywhere in the resume.
-   - Format as an array of categorized objects: [{"label": "Category Name", "value": "Skill 1, Skill 2, Skill 3"}]
-   - If categories are not explicitly named in the resume, group them logically (e.g. "Languages & Frameworks", "Cloud & DevOps", "Databases & Storage", "Tools & Platforms").
-   - NEVER drop or omit any technical skill mentioned in the resume.
-6. CERTIFICATIONS:
-   - Extract ALL verified certifications, licenses, and badges into an array of strings: ["Certification Name"].
-   - If none, return []. DO NOT include table headers.
-7. EDUCATION:
-   - Extract ALL degrees, diplomas, and colleges into an array: ["Degree / Course – University / Institute (Year / Score)"].
-   - If none, return []. DO NOT include table headers.
-8. COMPANIES (ALL WORK EXPERIENCES - LOSSLESS):
-   - Extract EVERY employer/company from the candidate's entire career history in reverse chronological order.
-   - Replace ONLY the present/most recent company name with "Forcecraver Technologies Pvt. Ltd." while preserving candidate's authentic role, exact duration, location, and ALL responsibility bullets.
-   - Retain authentic names and dates for all previous employers.
-   - Extract ALL responsibility bullets for each company without truncating, summarizing, or skipping any.
-9. PROJECTS (EVERY SINGLE PROJECT - MANDATORY 100% EXTRACTION):
-   - If the resume has a "KEY PROJECTS", "PROJECTS", "PERSONAL PROJECTS", or "CLIENT ENGAGEMENTS" section, you MUST extract EVERY SINGLE PROJECT into the "projects" array.
-   - NEVER omit any project, even if the resume already has companies. If there are 5 projects in the resume, the "projects" array MUST contain all 5 entries.
-   - For each project include:
-     * "name": Authentic Project Title (e.g. "Planboards", "La Bonne Semence", "BioSync", "Upvoit", "MilkClub")
-     * "role": Project Role (if not stated, use candidate's title or "")
-     * "duration": Project Duration or ""
-     * "client": Client Name or ""
-     * "environment": Complete Tech Stack / Tools / Libraries mentioned for this project
-     * "description": Project overview / summary description sentence
-     * "responsibilities": ALL bullet points and key achievements listed for this project
-10. STRICT NO-HALLUCINATION & NO-OMISSION RULE:
-   - Extract ONLY genuine facts present directly in the resume text.
-   - DO NOT fabricate fake information, but NEVER omit genuine information present in the resume.
+MANDATORY RULES (ZERO DATA LOSS):
+1. NAME, TITLE, EXPERIENCE: Authentic full name, headline, experience badge (e.g. "Experience: (6+ Years)").
+2. SUMMARY: Authentic summary text from resume.
+3. SKILLS: Categorized objects: [{"label": "Category", "value": "Comma-separated skills"}]. Include all skills.
+4. COMPANIES: Extract EVERY employer in reverse chronological order. Replace ONLY the most recent/present company name with "Forcecraver Technologies Pvt. Ltd.". Retain authentic names for all previous companies. Include all responsibility bullets.
+5. PROJECTS (CRITICAL): If the resume has a "KEY PROJECTS", "PROJECTS", or individual project descriptions, extract EVERY SINGLE PROJECT (e.g. all 4-8 projects) into the "projects" array. Each project MUST have:
+   - "name": Project Name
+   - "role": Project Role or Candidate Title
+   - "duration": Duration or ""
+   - "client": Client Name or ""
+   - "environment": Complete tech stack / tools / libraries
+   - "description": 1-sentence overview description
+   - "responsibilities": Array of original bullet points
+6. CERTIFICATIONS: Array of certification strings. If none, [].
+7. EDUCATION: Array of degree strings. If none, [].
 
-Return ONLY a valid JSON object matching this exact schema:
+Return ONLY a valid JSON object matching this schema:
 {
-  "name": "Candidate Full Name",
-  "title": "Candidate Professional Title",
-  "experience": "Experience: (X+ Years) OR Experience: (Fresher / Intern)",
-  "summary": "Crisp professional summary from resume",
-  "skills": [
-    { "label": "Category Name from Resume", "value": "Extracted Skill 1, Extracted Skill 2, Extracted Skill 3" }
-  ],
+  "name": "Full Name",
+  "title": "Title",
+  "experience": "Experience: (X+ Years)",
+  "summary": "Summary text",
+  "skills": [{"label": "Category", "value": "Skills"}],
   "companies": [
     {
       "company": "Forcecraver Technologies Pvt. Ltd.",
-      "role": "Present Job Role from Resume",
-      "duration": "Present Job Duration from Resume",
-      "location": "Location from Resume or empty",
-      "responsibilities": [
-        "Authentic responsibility bullet 1 directly from resume",
-        "Authentic responsibility bullet 2 directly from resume"
-      ]
-    },
-    {
-      "company": "Previous Company Name from Resume",
-      "role": "Past Job Role from Resume",
-      "duration": "Past Job Duration from Resume",
-      "location": "Location from Resume or empty",
-      "responsibilities": [
-        "Authentic responsibility bullet 1 directly from resume",
-        "Authentic responsibility bullet 2 directly from resume"
-      ]
+      "role": "Role",
+      "duration": "Duration",
+      "location": "Location",
+      "responsibilities": ["Bullet 1", "Bullet 2"]
     }
   ],
   "projects": [
     {
-      "name": "Project 1 Name from Resume",
-      "role": "Project Role from Resume",
-      "duration": "Project Duration from Resume or empty",
-      "client": "Client Name from Resume or empty",
-      "environment": "Tech Stack / Tools / Libraries for Project 1",
-      "description": "Overview description of Project 1",
-      "responsibilities": [
-        "Authentic project responsibility bullet 1 from resume",
-        "Authentic project responsibility bullet 2 from resume"
-      ]
-    },
-    {
-      "name": "Project 2 Name from Resume",
-      "role": "Project Role from Resume",
-      "duration": "Project Duration from Resume or empty",
-      "client": "Client Name from Resume or empty",
-      "environment": "Tech Stack / Tools / Libraries for Project 2",
-      "description": "Overview description of Project 2",
-      "responsibilities": [
-        "Authentic project responsibility bullet 1 from resume",
-        "Authentic project responsibility bullet 2 from resume"
-      ]
+      "name": "Project Name",
+      "role": "Role",
+      "duration": "Duration",
+      "client": "Client",
+      "environment": "Tech Stack",
+      "description": "Description",
+      "responsibilities": ["Bullet 1", "Bullet 2"]
     }
   ],
-  "certifications": ["Certification Name from Resume"],
-  "education": ["Degree – University/College (Year)"]
+  "certifications": [],
+  "education": ["Degree – University (Year)"]
 }`;
 
 function normalizeExperienceString(exp, role, summary, companies) {
@@ -267,11 +213,11 @@ function executeGroqRequest(cleanedText, modelName) {
             model: modelName,
             messages: [
                 { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'user', content: `Extract candidate resume details into JSON:\n\n${cleanedText}` }
+                { role: 'user', content: `Extract all resume information into a valid JSON object:\n\n${cleanedText}` }
             ],
             response_format: { type: 'json_object' },
             temperature: 0.0,
-            max_tokens: 3500
+            max_tokens: 3000
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {
@@ -313,9 +259,9 @@ function executeGroqRequest(cleanedText, modelName) {
 // Call Groq API via HTTPS with automatic fallback across active models
 async function processWithGroq(cleanedText) {
     const candidateModels = [
-        (process.env.GROQ_MODEL || GROQ_MODEL || 'openai/gpt-oss-20b').trim(),
-        'openai/gpt-oss-20b',
-        'openai/gpt-oss-120b'
+        (process.env.GROQ_MODEL || GROQ_MODEL || 'openai/gpt-oss-120b').trim(),
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b'
     ];
     const uniqueModels = Array.from(new Set(candidateModels.filter(Boolean)));
 
@@ -479,15 +425,9 @@ async function requestListener(req, res) {
                 const apiKey = (process.env.GROQ_API_KEY || GROQ_API_KEY || '').trim();
 
                 if (apiKey) {
-                    try {
-                        console.log(`[AI-Groq] Processing resume via Groq Cloud (${GROQ_MODEL})...`);
-                        rawContent = await processWithGroq(cleanedText);
-                        usedProvider = 'groq';
-                    } catch (groqErr) {
-                        console.warn('[AI] Groq unavailable/rate-limited, falling back to local Ollama:', groqErr.message);
-                        rawContent = await processWithOllama(cleanedText, model);
-                        usedProvider = 'ollama-fallback';
-                    }
+                    console.log(`[AI-Groq] Processing resume via Groq Cloud (${GROQ_MODEL})...`);
+                    rawContent = await processWithGroq(cleanedText);
+                    usedProvider = 'groq';
                 } else {
                     console.log(`[AI-Ollama] Processing resume via Ollama (${model})...`);
                     rawContent = await processWithOllama(cleanedText, model);
