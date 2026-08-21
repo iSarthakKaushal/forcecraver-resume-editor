@@ -407,28 +407,25 @@ async function processUploadedFile(file) {
 
         let structured = null;
 
-        try {
-            const aiRes = await fetch('/api/process-resume', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: extractedText,
-                    model: appState.ollamaModel || 'qwen2.5:latest'
-                })
-            });
+        const aiRes = await fetch('/api/process-resume', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: extractedText,
+                model: appState.ollamaModel || 'qwen2.5:latest'
+            })
+        });
 
-            if (aiRes.ok) {
-                const aiJson = await aiRes.json();
-                if (aiJson.success && aiJson.data && aiJson.data.name) {
-                    structured = aiJson.data;
-                }
+        if (aiRes.ok) {
+            const aiJson = await aiRes.json();
+            if (aiJson.success && aiJson.data && aiJson.data.name) {
+                structured = aiJson.data;
+            } else {
+                throw new Error(aiJson.error || 'AI returned incomplete or unparseable data');
             }
-        } catch (ollamaErr) {
-            console.warn('[AI] Ollama server request failed, falling back to local extractor:', ollamaErr);
-        }
-
-        if (!structured) {
-            structured = await parseRawResumeTextWithNLP(extractedText);
+        } else {
+            const errData = await aiRes.json().catch(() => ({}));
+            throw new Error(errData.error || `AI Server Error (Status ${aiRes.status})`);
         }
 
         // Post-processing: Guarantee Forcecraver rules, valid projects & 6-7 humanized bullet points

@@ -4,49 +4,47 @@ const http = require('http');
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
-const SYSTEM_PROMPT = `You are an expert Technical Resume Strategist and Parser.
-Extract structured data from the candidate resume text into valid JSON format.
+const SYSTEM_PROMPT = `You are an elite, highly accurate Technical Resume Parser & Information Extraction Engine.
+Your sole mission is 100% accurate, complete, and lossless data extraction from the provided candidate resume into valid JSON format.
 
-CRITICAL RULES:
-1. NAME: Extract candidate's real full name only. Completely omit phone numbers, emails, addresses, or links.
-2. EXPERIENCE:
-   - Calculate total work experience ONLY from actual company/employment history. DO NOT calculate from education/college years.
-   - If candidate is a fresher, intern, student, or has under 1 year of total full-time experience, set experience strictly to "Experience: (Fresher / Intern)".
-   - For experienced professionals, set to "Experience: (X+ Years)" based on actual work history years (e.g. "Experience: (5+ Years)").
-3. TITLE: Professional designation directly from the resume (e.g. candidate's primary job title or headline).
-4. SUMMARY: Crisp 3 to 4 sentence professional summary extracted from the candidate's profile/summary.
-   STRICT RULE: NEVER include project highlights, client names, tool dumps, or bullet points in the summary. If no summary exists, return "".
-5. SKILLS: Extract the candidate's authentic skill categories and technologies directly from their resume.
-   Format skills as an array of objects:
-   "skills": [
-     { "label": "Category Name from Resume", "value": "Comma-separated skills strictly from resume" }
-   ]
-   If no skill categories are specified in the resume, group extracted technical skills under label "Technical Skills".
-6. CERTIFICATIONS: Array of verified credentials extracted strictly from the candidate's certifications section (e.g. ["Certification Name from Resume"]).
-   STRICT RULE: NEVER mix education table headers into certifications. If none, return [].
-7. EDUCATION: Array of degrees with university/school/year/grades (e.g. ["Degree – University/Institute (Year)"]).
-   STRICT RULE: NEVER include table headers as an education entry. If none, return [].
-8. COMPANIES: Extract actual employers where the candidate was formally employed from Work Experience history in reverse chronological order.
-   - Replace ONLY the present/first employer's company name with "Forcecraver Technologies Pvt. Ltd." while preserving candidate's authentic job title/role, exact duration, and exact bullet points from the resume.
-   - For past employers, retain their real authentic company names, authentic roles, and authentic dates.
-   - If duration is given, keep the exact duration. If duration is NOT given, set "duration": "".
-   - IMPORTANT: If a resume lists Client projects under Work History (e.g. "Client: ABC Corp", "Project: XYZ"), do NOT classify those clients as employers in "companies". Extract them into the "projects" array instead!
-9. PROJECTS: Array of candidate's authentic projects from the resume (name, role, duration, client, environment, description, responsibilities).
-   - If a project specifies a client, set "client": "<Client Name>".
-   - If duration is given in the resume, set exact duration; if NOT given, set "duration": "".
-   - Extract candidate's REAL project bullet points directly from the resume for "responsibilities".
-   - If candidate's resume has NO separate projects or client engagements, return an empty array "projects": [].
-10. STRICT ANTI-BIAS & NO-HALLUCINATION RULE:
-   - NEVER copy, adapt, or hallucinate any values, skills, technologies, job roles, bullets, or companies from prompt instructions or examples.
-   - Extract ONLY genuine facts, authentic skills, and real bullet points present directly in the provided user resume text.
-   - If a section or field is not present in the user's resume, set it strictly to an empty array [] or empty string "".
+CRITICAL EXTRACTION DIRECTIVES (ZERO DATA LOSS):
+1. NAME: Extract candidate's authentic full name. Completely omit phone numbers, emails, addresses, links, or headers.
+2. TITLE: Primary professional job title, headline, or current role directly from the resume.
+3. EXPERIENCE BADGE:
+   - Calculate total full-time professional experience strictly from the employment/work history dates (NOT from college/education graduation years).
+   - If candidate is a student/fresher/intern or has < 1 year experience: "Experience: (Fresher / Intern)".
+   - For experienced professionals: "Experience: (X+ Years)" (e.g. "Experience: (9+ Years)").
+4. SUMMARY: Extract candidate's professional summary / profile text (3-4 sentences). Omit raw contact info or bulleted project dumps. If none exists, return "".
+5. SKILLS (100% COMPLETE):
+   - Extract ALL technical skills, programming languages, tools, frameworks, databases, cloud platforms, and libraries present anywhere in the resume.
+   - Format as an array of categorized objects: [{"label": "Category Name", "value": "Skill 1, Skill 2, Skill 3"}]
+   - If categories are not explicitly named in the resume, group them logically (e.g. "Languages & Frameworks", "Cloud & DevOps", "Databases & Storage", "Tools & Platforms").
+   - NEVER drop or omit any technical skill mentioned in the resume.
+6. CERTIFICATIONS:
+   - Extract ALL verified certifications, licenses, and badges into an array of strings: ["Certification Name"].
+   - If none, return []. DO NOT include table headers.
+7. EDUCATION:
+   - Extract ALL degrees, diplomas, and colleges into an array: ["Degree / Course – University / Institute (Year / Score)"].
+   - If none, return []. DO NOT include table headers.
+8. COMPANIES (ALL WORK EXPERIENCES - LOSSLESS):
+   - Extract EVERY employer/company from the candidate's entire career history in reverse chronological order.
+   - Replace ONLY the present/most recent company name with "Forcecraver Technologies Pvt. Ltd." while preserving candidate's authentic role, exact duration, location, and ALL responsibility bullets.
+   - Retain authentic names and dates for all previous employers.
+   - Extract ALL responsibility bullets for each company without truncating, summarizing, or skipping any.
+9. PROJECTS (ALL PROJECTS & ENGAGEMENTS - LOSSLESS):
+   - Extract EVERY project, client engagement, and software system mentioned in the resume.
+   - Include: "name", "role", "duration", "client", "environment" (tech stack), "description", and "responsibilities" (ALL original bullet points for that project).
+   - DO NOT omit, summarize, or discard any project.
+10. STRICT NO-HALLUCINATION & NO-OMISSION RULE:
+   - Extract ONLY genuine facts present directly in the resume text.
+   - DO NOT fabricate fake information, but NEVER omit genuine information present in the resume.
 
 Return ONLY a valid JSON object matching this exact schema:
 {
   "name": "Candidate Full Name",
   "title": "Candidate Professional Title",
   "experience": "Experience: (X+ Years) OR Experience: (Fresher / Intern)",
-  "summary": "Crisp 3-4 line professional summary from resume",
+  "summary": "Crisp professional summary from resume",
   "skills": [
     { "label": "Category Name from Resume", "value": "Extracted Skill 1, Extracted Skill 2, Extracted Skill 3" }
   ],
@@ -237,7 +235,7 @@ function executeGroqRequest(cleanedText, modelName) {
             ],
             response_format: { type: 'json_object' },
             temperature: 0.0,
-            max_tokens: 3500
+            max_tokens: 8192
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {
@@ -308,10 +306,11 @@ function processWithOllama(cleanedText, model = 'qwen2.5:latest') {
             format: 'json',
             stream: false,
             options: {
-                temperature: 0.1,
-                num_ctx: 4096,
-                num_predict: 2000,
-                top_p: 0.8
+                temperature: 0.0,
+                num_ctx: 32768,
+                num_predict: 8192,
+                top_p: 0.95,
+                seed: 42
             }
         });
 
@@ -344,7 +343,7 @@ function processWithOllama(cleanedText, model = 'qwen2.5:latest') {
 
         req.on('timeout', () => {
             req.destroy();
-            reject(new Error('Ollama request timed out after 60s'));
+            reject(new Error('Ollama request timed out after 180s'));
         });
 
         req.on('error', reject);
@@ -399,8 +398,7 @@ module.exports = async (req, res) => {
         .split('\n')
         .map(l => l.trim())
         .filter(l => l.length > 0 && !/page\s*\d+\s*of\s*\d+/i.test(l))
-        .join('\n')
-        .substring(0, 8000);
+        .join('\n');
 
     const startTime = Date.now();
     const apiKey = (process.env.GROQ_API_KEY || GROQ_API_KEY || '').trim();
