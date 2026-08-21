@@ -68,10 +68,17 @@ CRITICAL EXTRACTION DIRECTIVES (ZERO DATA LOSS):
    - Replace ONLY the present/most recent company name with "Forcecraver Technologies Pvt. Ltd." while preserving candidate's authentic role, exact duration, location, and ALL responsibility bullets.
    - Retain authentic names and dates for all previous employers.
    - Extract ALL responsibility bullets for each company without truncating, summarizing, or skipping any.
-9. PROJECTS (ALL PROJECTS & ENGAGEMENTS - LOSSLESS):
-   - Extract EVERY project, client engagement, and software system mentioned in the resume.
-   - Include: "name", "role", "duration", "client", "environment" (tech stack), "description", and "responsibilities" (ALL original bullet points for that project).
-   - DO NOT omit, summarize, or discard any project.
+9. PROJECTS (EVERY SINGLE PROJECT - MANDATORY 100% EXTRACTION):
+   - If the resume has a "KEY PROJECTS", "PROJECTS", "PERSONAL PROJECTS", or "CLIENT ENGAGEMENTS" section, you MUST extract EVERY SINGLE PROJECT into the "projects" array.
+   - NEVER omit any project, even if the resume already has companies. If there are 5 projects in the resume, the "projects" array MUST contain all 5 entries.
+   - For each project include:
+     * "name": Authentic Project Title (e.g. "Planboards", "La Bonne Semence", "BioSync", "Upvoit", "MilkClub")
+     * "role": Project Role (if not stated, use candidate's title or "")
+     * "duration": Project Duration or ""
+     * "client": Client Name or ""
+     * "environment": Complete Tech Stack / Tools / Libraries mentioned for this project
+     * "description": Project overview / summary description sentence
+     * "responsibilities": ALL bullet points and key achievements listed for this project
 10. STRICT NO-HALLUCINATION & NO-OMISSION RULE:
    - Extract ONLY genuine facts present directly in the resume text.
    - DO NOT fabricate fake information, but NEVER omit genuine information present in the resume.
@@ -85,8 +92,6 @@ Return ONLY a valid JSON object matching this exact schema:
   "skills": [
     { "label": "Category Name from Resume", "value": "Extracted Skill 1, Extracted Skill 2, Extracted Skill 3" }
   ],
-  "certifications": ["Certification Name from Resume"],
-  "education": ["Degree – University/College (Year)"],
   "companies": [
     {
       "company": "Forcecraver Technologies Pvt. Ltd.",
@@ -111,18 +116,32 @@ Return ONLY a valid JSON object matching this exact schema:
   ],
   "projects": [
     {
-      "name": "Project Name from Resume",
+      "name": "Project 1 Name from Resume",
       "role": "Project Role from Resume",
       "duration": "Project Duration from Resume or empty",
       "client": "Client Name from Resume or empty",
-      "environment": "Tech Stack / Environment from Resume or empty",
-      "description": "Project Description from Resume or empty",
+      "environment": "Tech Stack / Tools / Libraries for Project 1",
+      "description": "Overview description of Project 1",
+      "responsibilities": [
+        "Authentic project responsibility bullet 1 from resume",
+        "Authentic project responsibility bullet 2 from resume"
+      ]
+    },
+    {
+      "name": "Project 2 Name from Resume",
+      "role": "Project Role from Resume",
+      "duration": "Project Duration from Resume or empty",
+      "client": "Client Name from Resume or empty",
+      "environment": "Tech Stack / Tools / Libraries for Project 2",
+      "description": "Overview description of Project 2",
       "responsibilities": [
         "Authentic project responsibility bullet 1 from resume",
         "Authentic project responsibility bullet 2 from resume"
       ]
     }
-  ]
+  ],
+  "certifications": ["Certification Name from Resume"],
+  "education": ["Degree – University/College (Year)"]
 }`;
 
 function filterAndCleanEduCertText(text) {
@@ -334,10 +353,9 @@ async function processWithGroq(cleanedText) {
     }
 
     const candidateModels = [
-        (process.env.GROQ_MODEL || GROQ_MODEL || 'openai/gpt-oss-120b').trim(),
-        'openai/gpt-oss-120b',
+        (process.env.GROQ_MODEL || GROQ_MODEL || 'openai/gpt-oss-20b').trim(),
         'openai/gpt-oss-20b',
-        'qwen/qwen3.6-27b'
+        'openai/gpt-oss-120b'
     ];
     const uniqueModels = Array.from(new Set(candidateModels.filter(Boolean)));
     const errors = [];
