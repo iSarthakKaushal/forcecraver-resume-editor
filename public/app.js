@@ -510,15 +510,22 @@ async function extractTextFromPdf(arrayBuffer) {
             return columnText;
         };
 
-        // Multi-column sidebar detection:
-        // Check if there is a 2-column or sidebar layout on this page
+        // Robust Multi-column sidebar detection:
+        // Genuine 2-column sidebar exists ONLY if:
+        // 1. Left items (< split) and right items (>= split) both form substantial distinct blocks
+        // 2. Very few or NO single-column paragraphs span across the vertical boundary
         let bestSplitX = -1;
-        for (let ratio of [0.30, 0.35, 0.40, 0.50]) {
+        for (let ratio of [0.28, 0.32, 0.36, 0.40, 0.45]) {
             const split = pageWidth * ratio;
-            const left = validItems.filter(it => it.transform[4] < split);
-            const right = validItems.filter(it => it.transform[4] >= split);
+            const leftItems = validItems.filter(it => it.transform[4] < split - 15);
+            const rightItems = validItems.filter(it => it.transform[4] >= split);
+            const spanningItems = validItems.filter(it => {
+                const x = it.transform[4];
+                const width = it.width || (it.str.length * 6);
+                return x < split && (x + width) > (split + 30);
+            });
 
-            if (left.length >= 8 && right.length >= 12) {
+            if (leftItems.length >= 15 && rightItems.length >= 20 && spanningItems.length <= 2) {
                 bestSplitX = split;
                 break;
             }
@@ -530,7 +537,7 @@ async function extractTextFromPdf(arrayBuffer) {
 
             const leftText = extractLinesFromItems(leftItems);
             const rightText = extractLinesFromItems(rightItems);
-            return leftText + '\n\n' + rightText;
+            return rightText + '\n\n' + leftText;
         } else {
             return extractLinesFromItems(validItems);
         }
