@@ -986,7 +986,8 @@ html, body {
     width: 100%;
     height: auto;
     object-fit: contain;
-    opacity: 0.16;
+    opacity: 0.28;
+    filter: contrast(1.1) brightness(1.05);
     transform: rotate(-15deg);
     pointer-events: none;
     user-select: none;
@@ -1461,7 +1462,8 @@ html, body {
         width: 155mm !important;
         max-width: 80% !important;
         height: auto !important;
-        opacity: 0.13 !important;
+        opacity: 0.25 !important;
+        filter: contrast(1.1) brightness(1.05) !important;
         transform: rotate(-15deg) !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
