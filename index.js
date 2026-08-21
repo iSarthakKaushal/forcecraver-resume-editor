@@ -562,10 +562,20 @@ async function requestHandler(req, res) {
         const startTime = Date.now();
         try {
             let rawContent = '';
-            if (GROQ_API_KEY) {
-                rawContent = await processWithGroq(cleanedText);
+            let usedProvider = 'ollama';
+            const apiKey = (process.env.GROQ_API_KEY || GROQ_API_KEY || '').trim();
+            if (apiKey) {
+                try {
+                    rawContent = await processWithGroq(cleanedText);
+                    usedProvider = 'groq';
+                } catch (groqErr) {
+                    console.warn('[AI] Groq unavailable/rate-limited, falling back to local Ollama:', groqErr.message);
+                    rawContent = await processWithOllama(cleanedText, model);
+                    usedProvider = 'ollama-fallback';
+                }
             } else {
                 rawContent = await processWithOllama(cleanedText, model);
+                usedProvider = 'ollama';
             }
 
             const elapsedMs = Date.now() - startTime;

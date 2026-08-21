@@ -425,10 +425,19 @@ module.exports = async (req, res) => {
 
     try {
         let rawContent = '';
+        let usedProvider = 'ollama';
         if (apiKey) {
-            rawContent = await processWithGroq(cleanedText);
+            try {
+                rawContent = await processWithGroq(cleanedText);
+                usedProvider = 'groq';
+            } catch (groqErr) {
+                console.warn('[AI] Groq unavailable/rate-limited, falling back to local Ollama:', groqErr.message);
+                rawContent = await processWithOllama(cleanedText, model);
+                usedProvider = 'ollama-fallback';
+            }
         } else {
             rawContent = await processWithOllama(cleanedText, model);
+            usedProvider = 'ollama';
         }
 
         const elapsedMs = Date.now() - startTime;

@@ -474,18 +474,28 @@ async function requestListener(req, res) {
                     .join('\n');
 
                 let rawContent = '';
+                let usedProvider = 'ollama';
                 const startTime = Date.now();
+                const apiKey = (process.env.GROQ_API_KEY || GROQ_API_KEY || '').trim();
 
-                if (GROQ_API_KEY) {
-                    console.log(`[AI-Groq] Processing resume via Groq Cloud (${GROQ_MODEL})...`);
-                    rawContent = await processWithGroq(cleanedText);
+                if (apiKey) {
+                    try {
+                        console.log(`[AI-Groq] Processing resume via Groq Cloud (${GROQ_MODEL})...`);
+                        rawContent = await processWithGroq(cleanedText);
+                        usedProvider = 'groq';
+                    } catch (groqErr) {
+                        console.warn('[AI] Groq unavailable/rate-limited, falling back to local Ollama:', groqErr.message);
+                        rawContent = await processWithOllama(cleanedText, model);
+                        usedProvider = 'ollama-fallback';
+                    }
                 } else {
                     console.log(`[AI-Ollama] Processing resume via Ollama (${model})...`);
                     rawContent = await processWithOllama(cleanedText, model);
+                    usedProvider = 'ollama';
                 }
 
                 const elapsedMs = Date.now() - startTime;
-                console.log(`[AI] Response received in ${elapsedMs}ms`);
+                console.log(`[AI] Response received via ${usedProvider} in ${elapsedMs}ms`);
 
                 // Parse returned JSON safely
                 let cleanJsonStr = rawContent.trim();
