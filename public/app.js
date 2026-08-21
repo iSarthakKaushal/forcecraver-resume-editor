@@ -1778,47 +1778,7 @@ async function exportToDocx() {
             });
         }
 
-        // 4. Certifications (Separate Section)
-        const validCerts = (d.certifications || [])
-            .map(c => filterAndCleanEduCertText(String(c)))
-            .filter(Boolean);
-
-        if (validCerts.length > 0) {
-            docChildren.push(addSectionHeading("CERTIFICATIONS"));
-            validCerts.forEach(cert => {
-                docChildren.push(
-                    new Paragraph({
-                        bullet: { level: 0 },
-                        spacing: { after: 40 },
-                        children: [
-                            new TextRun({ text: cert, size: 19, font: "Arial", color: "1E293B" })
-                        ]
-                    })
-                );
-            });
-        }
-
-        // 5. Education (Separate Section)
-        const validEdu = (d.education || [])
-            .map(e => filterAndCleanEduCertText(String(e)))
-            .filter(Boolean);
-
-        if (validEdu.length > 0) {
-            docChildren.push(addSectionHeading("EDUCATION"));
-            validEdu.forEach(edu => {
-                docChildren.push(
-                    new Paragraph({
-                        bullet: { level: 0 },
-                        spacing: { after: 40 },
-                        children: [
-                            new TextRun({ text: edu, size: 19, font: "Arial", color: "1E293B" })
-                        ]
-                    })
-                );
-            });
-        }
-
-        // 5. Professional Experience
+        // 4. Professional Experience
         if (d.companies && d.companies.length) {
             docChildren.push(addSectionHeading("PROFESSIONAL EXPERIENCE"));
             d.companies.forEach(c => {
@@ -1846,7 +1806,7 @@ async function exportToDocx() {
             });
         }
 
-        // 6. Projects Detail
+        // 5. Projects Detail
         if (d.projects && d.projects.length) {
             docChildren.push(addSectionHeading("PROJECTS DETAIL"));
             d.projects.forEach((p, idx) => {
@@ -1925,6 +1885,46 @@ async function exportToDocx() {
                         );
                     });
                 }
+            });
+        }
+
+        // 6. Certifications (Separate Section)
+        const validCerts = (d.certifications || [])
+            .map(c => filterAndCleanEduCertText(String(c)))
+            .filter(Boolean);
+
+        if (validCerts.length > 0) {
+            docChildren.push(addSectionHeading("CERTIFICATIONS"));
+            validCerts.forEach(cert => {
+                docChildren.push(
+                    new Paragraph({
+                        bullet: { level: 0 },
+                        spacing: { after: 40 },
+                        children: [
+                            new TextRun({ text: cert, size: 19, font: "Arial", color: "1E293B" })
+                        ]
+                    })
+                );
+            });
+        }
+
+        // 7. Education (Separate Section)
+        const validEdu = (d.education || [])
+            .map(e => filterAndCleanEduCertText(String(e)))
+            .filter(Boolean);
+
+        if (validEdu.length > 0) {
+            docChildren.push(addSectionHeading("EDUCATION"));
+            validEdu.forEach(edu => {
+                docChildren.push(
+                    new Paragraph({
+                        bullet: { level: 0 },
+                        spacing: { after: 40 },
+                        children: [
+                            new TextRun({ text: edu, size: 19, font: "Arial", color: "1E293B" })
+                        ]
+                    })
+                );
             });
         }
 

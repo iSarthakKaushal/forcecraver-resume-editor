@@ -269,42 +269,8 @@
                             </div>
                         </div>
 
-                        <!-- Accordion 4: Certifications -->
-                        <div class="form-card">
-                            <div class="form-card-header" onclick="toggleAccordion('certsCard')">
-                                <div class="header-title">
-                                    <i data-lucide="award"></i>
-                                    <h4>Certifications & Credentials</h4>
-                                </div>
-                                <i data-lucide="chevron-down" class="accordion-icon" id="certsCardIcon"></i>
-                            </div>
-                            <div class="form-card-body" id="certsCardBody">
-                                <div class="form-group">
-                                    <label>Certifications (One per line)</label>
-                                    <textarea id="inputCertifications" class="form-textarea" rows="3" placeholder="Datadog: Site Reliability Engineering&#10;New Relic: Observability Foundations&#10;Google Cloud: Associate Cloud Engineer&#10;Apache JMeter Performance Engineer"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Accordion 5: Education -->
-                        <div class="form-card">
-                            <div class="form-card-header" onclick="toggleAccordion('eduCard')">
-                                <div class="header-title">
-                                    <i data-lucide="graduation-cap"></i>
-                                    <h4>Education & Qualifications</h4>
-                                </div>
-                                <i data-lucide="chevron-down" class="accordion-icon" id="eduCardIcon"></i>
-                            </div>
-                            <div class="form-card-body" id="eduCardBody">
-                                <div class="form-group">
-                                    <label>Education Details (One per line)</label>
-                                    <textarea id="inputEducation" class="form-textarea" rows="3" placeholder="B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA&#10;Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%&#10;Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Accordion 6: Professional Experience -->
-                        <div class="form-card">
+                        <!-- Accordion 4: Professional Experience -->
+                        <div class="form-card" id="expCard">
                             <div class="form-card-header" onclick="toggleAccordion('expCard')">
                                 <div class="header-title">
                                     <i data-lucide="briefcase"></i>
@@ -324,8 +290,8 @@
                             </div>
                         </div>
 
-                        <!-- Accordion 7: Projects Detail -->
-                        <div class="form-card">
+                        <!-- Accordion 5: Projects Detail -->
+                        <div class="form-card" id="projectsCard">
                             <div class="form-card-header" onclick="toggleAccordion('projectsCard')">
                                 <div class="header-title">
                                     <i data-lucide="folder-git-2"></i>
@@ -341,6 +307,40 @@
                             <div class="form-card-body" id="projectsCardBody">
                                 <div id="projectsContainer" class="dynamic-items-container">
                                     <!-- Dynamic Project Cards Injected Here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accordion 6: Certifications -->
+                        <div class="form-card" id="certsCard">
+                            <div class="form-card-header" onclick="toggleAccordion('certsCard')">
+                                <div class="header-title">
+                                    <i data-lucide="award"></i>
+                                    <h4>Certifications & Credentials</h4>
+                                </div>
+                                <i data-lucide="chevron-down" class="accordion-icon" id="certsCardIcon"></i>
+                            </div>
+                            <div class="form-card-body" id="certsCardBody">
+                                <div class="form-group">
+                                    <label>Certifications (One per line)</label>
+                                    <textarea id="inputCertifications" class="form-textarea" rows="3" placeholder="Datadog: Site Reliability Engineering&#10;New Relic: Observability Foundations&#10;Google Cloud: Associate Cloud Engineer&#10;Apache JMeter Performance Engineer"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accordion 7: Education -->
+                        <div class="form-card" id="eduCard">
+                            <div class="form-card-header" onclick="toggleAccordion('eduCard')">
+                                <div class="header-title">
+                                    <i data-lucide="graduation-cap"></i>
+                                    <h4>Education & Qualifications</h4>
+                                </div>
+                                <i data-lucide="chevron-down" class="accordion-icon" id="eduCardIcon"></i>
+                            </div>
+                            <div class="form-card-body" id="eduCardBody">
+                                <div class="form-group">
+                                    <label>Education Details (One per line)</label>
+                                    <textarea id="inputEducation" class="form-textarea" rows="3" placeholder="B.E., Electronics – CET, Bhubaneswar (2013–2017) | 8.58 CGPA&#10;Class XII – ODM Public School, Bhubaneswar (2011–2013) | 89.8%&#10;Class X – ST. Xavier's High School, Bhadrak (2011) | 10 CGPA"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -380,22 +380,6 @@
                                 </div>
                             </div>
 
-                            <!-- Section: Certifications (Separate Distinct Section) -->
-                            <div class="res-section" id="secCertifications">
-                                <div class="res-section-title">CERTIFICATIONS</div>
-                                <div class="res-certs-container" id="previewCertsContainer">
-                                    <!-- Dynamic Certifications Injected Here -->
-                                </div>
-                            </div>
-
-                            <!-- Section: Education (Separate Distinct Section) -->
-                            <div class="res-section" id="secEducation">
-                                <div class="res-section-title">EDUCATION</div>
-                                <div class="res-edu-container" id="previewEduContainer">
-                                    <!-- Dynamic Education Injected Here -->
-                                </div>
-                            </div>
-
                             <!-- Section: Professional Experience -->
                             <div class="res-section" id="secExp">
                                 <div class="res-section-title">PROFESSIONAL EXPERIENCE</div>
@@ -409,6 +393,22 @@
                                 <div class="res-section-title">PROJECTS DETAIL</div>
                                 <div class="res-projects-list" id="previewProjectsList">
                                     <!-- Dynamic Projects Injected Here -->
+                                </div>
+                            </div>
+
+                            <!-- Section: Certifications (Separate Distinct Section) -->
+                            <div class="res-section" id="secCertifications">
+                                <div class="res-section-title">CERTIFICATIONS</div>
+                                <div class="res-certs-container" id="previewCertsContainer">
+                                    <!-- Dynamic Certifications Injected Here -->
+                                </div>
+                            </div>
+
+                            <!-- Section: Education (Separate Distinct Section) -->
+                            <div class="res-section" id="secEducation">
+                                <div class="res-section-title">EDUCATION</div>
+                                <div class="res-edu-container" id="previewEduContainer">
+                                    <!-- Dynamic Education Injected Here -->
                                 </div>
                             </div>
                         </div>
