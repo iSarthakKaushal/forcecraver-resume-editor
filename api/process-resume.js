@@ -235,7 +235,7 @@ function executeGroqRequest(cleanedText, modelName) {
             ],
             response_format: { type: 'json_object' },
             temperature: 0.0,
-            max_tokens: 4000
+            max_tokens: 2800
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {
@@ -276,10 +276,10 @@ function executeGroqRequest(cleanedText, modelName) {
 
 async function processWithGroq(cleanedText) {
     const candidateModels = [
-        (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile').trim(),
-        'llama-3.3-70b-versatile',
-        'llama-3.1-8b-instant',
-        'mixtral-8x7b-32768'
+        (process.env.GROQ_MODEL || 'openai/gpt-oss-120b').trim(),
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
+        'qwen/qwen3.6-27b'
     ];
     const uniqueModels = Array.from(new Set(candidateModels.filter(Boolean)));
 

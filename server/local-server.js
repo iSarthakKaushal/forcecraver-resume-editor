@@ -28,7 +28,7 @@ loadEnvFile();
 
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
 const MIME_TYPES = {
@@ -242,18 +242,17 @@ function normalizeCompaniesWithForcecraver(companies, title) {
     return result;
 }
 
-// Call Groq API via HTTPS
-function processWithGroq(cleanedText) {
+function executeGroqRequest(cleanedText, modelName) {
     return new Promise((resolve, reject) => {
         const payload = JSON.stringify({
-            model: GROQ_MODEL,
+            model: modelName,
             messages: [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'user', content: `Extract candidate resume details into JSON:\n\n${cleanedText}` }
             ],
             response_format: { type: 'json_object' },
             temperature: 0.0,
-            max_tokens: 4000
+            max_tokens: 2800
         });
 
         const req = https.request('https://api.groq.com/openai/v1/chat/completions', {
@@ -263,7 +262,7 @@ function processWithGroq(cleanedText) {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(payload)
             },
-            timeout: 30000
+            timeout: 40000
         }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
@@ -290,6 +289,30 @@ function processWithGroq(cleanedText) {
         req.write(payload);
         req.end();
     });
+}
+
+// Call Groq API via HTTPS with automatic fallback across active models
+async function processWithGroq(cleanedText) {
+    const candidateModels = [
+        (process.env.GROQ_MODEL || GROQ_MODEL || 'openai/gpt-oss-120b').trim(),
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
+        'qwen/qwen3.6-27b'
+    ];
+    const uniqueModels = Array.from(new Set(candidateModels.filter(Boolean)));
+
+    let lastError = null;
+    for (const modelName of uniqueModels) {
+        try {
+            const content = await executeGroqRequest(cleanedText, modelName);
+            if (content && content.length > 20) {
+                return content;
+            }
+        } catch (err) {
+            lastError = err;
+        }
+    }
+    throw new Error(`All Groq models failed. Last error: ${lastError ? lastError.message : 'Unknown'}`);
 }
 
 // Call Ollama API via HTTP
